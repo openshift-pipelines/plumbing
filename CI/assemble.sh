@@ -36,6 +36,9 @@ recreate () {
 	done
 }
 
+# We use the builder image
+oc adm policy add-scc-to-user privileged -z builder 2>/dev/null || true
+
 kubectl create ns ${TARGET_NAMESPACE} 2>/dev/null || true
 
 install_catalog_tasks
