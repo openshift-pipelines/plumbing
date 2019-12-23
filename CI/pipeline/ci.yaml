@@ -26,3 +26,5 @@ spec:
     params:
       - name: DOCKERFILE
         value: CI/bootstrap/Dockerfile
+      - name: TLSVERIFY
+        value: "false"
