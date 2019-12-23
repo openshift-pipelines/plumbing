@@ -26,7 +26,7 @@ install_local_resources() {
     done
 }
 
-recreate () {
+krecreate () {
 	for file in $@
 	do
 		for action in delete create
@@ -36,17 +36,29 @@ recreate () {
 	done
 }
 
-# We do this so we can have some custom configuration in there, i.e: installing secret
-[[ -x ./local/run.sh ]] && source ./local/run.sh
+install() {
+	# We do this so we can have some custom configuration in there, i.e: installing secret
+	[[ -x ./local/run.sh ]] && source ./local/run.sh
 
-# We use the builder image for our building task until buildah can build without
-# privileged
-oc get scc privileged -o yaml|grep -q "- system:serviceaccount:${TARGET_NAMESPACE}:builder" ||
-    oc adm policy add-scc-to-user privileged -z builder
+	# We use the builder image for our building task until buildah can build without
+	# privileged
+	oc get scc privileged -o yaml|grep -q "- system:serviceaccount:${TARGET_NAMESPACE}:builder" ||
+		oc adm policy add-scc-to-user privileged -z builder
 
-kubectl create ns ${TARGET_NAMESPACE} 2>/dev/null || true
+	kubectl create ns ${TARGET_NAMESPACE} 2>/dev/null || true
 
-install_catalog_tasks
-install_local_resources
+	install_catalog_tasks
+	install_local_resources
+}
 
-recreate ./pipeline/ci.yaml ./pipeline/ci-run.yaml
+
+run() {
+	krecreate ./pipeline/ci.yaml ./pipeline/ci-run.yaml
+}
+
+main() {
+	install
+	run
+}
+
+main
