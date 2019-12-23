@@ -36,7 +36,8 @@ recreate () {
 	done
 }
 
-# We use the builder image
+# We use the builder image for our building task until buildah can build without
+# privileged
 oc adm policy add-scc-to-user privileged -z builder 2>/dev/null || true
 
 kubectl create ns ${TARGET_NAMESPACE} 2>/dev/null || true
