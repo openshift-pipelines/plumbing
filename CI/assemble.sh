@@ -26,6 +26,7 @@ install_local_resources() {
     done
 }
 
+# Utils to delete/create (ie: recreate) easily resource
 krecreate () {
 	for file in $@
 	do
@@ -60,5 +61,6 @@ main() {
 	install
 	run
 }
+
 
 main
