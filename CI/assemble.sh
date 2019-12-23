@@ -26,7 +26,19 @@ install_local_resources() {
     done
 }
 
+recreate () {
+	for file in $@
+	do
+		for action in delete create
+		do
+			kubectl $action -f $file
+		done
+	done
+}
+
 kubectl create ns ${TARGET_NAMESPACE} 2>/dev/null || true
 
 install_catalog_tasks
 install_local_resources
+
+recreate ./pipeline/ci.yaml ./pipeline/ci-run.yaml

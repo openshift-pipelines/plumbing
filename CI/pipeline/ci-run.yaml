@@ -1,0 +1,16 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineRun
+metadata:
+  name: openshift-pipeline-ci-run
+spec:
+  pipelineRef:
+    name: openshift-pipeline-ci
+  serviceAccountName: 'builder'
+  resources:
+  - name: plumbing-git
+    resourceRef:
+      name: plumbing-git
+  - name: bootstrap-image
+    resourceRef:
+      name: bootstrap-image

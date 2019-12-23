@@ -6,14 +6,23 @@ metadata:
 
 spec:
   resources:
-  - type: git
-    resource: plumbing-git
-  - type: image
-    resource: image-bootstrap
+    - name: plumbing-git
+      type: git
+
+    - name: bootstrap-image
+      type: image
+
   tasks:
   - name: buildah
     taskRef:
       name: buildah
+    resources:
+      inputs:
+        - name: source
+          resource: plumbing-git
+      outputs:
+        - name: image
+          resource: bootstrap-image
     params:
       - name: DOCKERFILE
         value: CI/bootstrap/Dockerfile

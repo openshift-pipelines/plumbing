@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineResource
 metadata:
-  name: image-bootstrap
+  name: bootstrap-image
 spec:
   type: image
   params:
