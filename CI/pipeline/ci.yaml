@@ -1,0 +1,19 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: openshift-pipeline-ci
+
+spec:
+  resources:
+  - type: git
+    resource: plumbing-git
+  - type: image
+    resource: image-bootstrap
+  tasks:
+  - name: buildah
+    taskRef:
+      name: buildah
+    params:
+      - name: DOCKERFILE
+        value: CI/bootstrap/Dockerfile
