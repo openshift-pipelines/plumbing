@@ -1,0 +1,113 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: os4-cluster-install
+spec:
+  inputs:
+    params:
+    - name: BASE_DOMAIN
+      description: Base domain of your cluster install
+      default: "devcluster.openshift.com"
+    - name: REPLICAS
+      description: How many replicas
+      default: "3"
+    - name: AWS_REGION
+      description: AWS Region where to install
+      default: "us-east-2"
+    - name: CLUSTER_NAME
+      description: Cluster name
+      default: "openshift-pipelines-install"
+
+  steps:
+  - name: openshift-install-config
+    image: image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines/openshift-pipeline-bootstrap
+    workingDir: /workspace/install
+    env:
+    - name: REGISTRY_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: registry-token
+    - name: PUBLIC_SSH_KEY
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: public-ssh-key
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: aws-access-key-id
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: aws-secret-access-key
+    script: |
+      #!/usr/bin/env bash
+      cat << EOF > install-config.yaml
+      apiVersion: v1
+      baseDomain: $(inputs.params.BASE_DOMAIN)
+      compute:
+      - hyperthreading: Enabled
+        name: worker
+        platform: {}
+        replicas: $(inputs.params.REPLICAS)
+      controlPlane:
+        hyperthreading: Enabled
+        name: master
+        platform: {}
+        replicas: $(inputs.params.REPLICAS)
+      metadata:
+        creationTimestamp: null
+        name: $(inputs.params.CLUSTER_NAME)
+      networking:
+        clusterNetwork:
+        - cidr: 10.128.0.0/14
+          hostPrefix: 23
+        machineCIDR: 10.0.0.0/16
+        networkType: OpenShiftSDN
+        serviceNetwork:
+        - 172.30.0.0/16
+      platform:
+        aws:
+          region: $(inputs.params.AWS_REGION)
+      pullSecret: '$REGISTRY_TOKEN'
+      sshKey: '$PUBLIC_SSH_KEY'
+      EOF
+  - name: openshift-install-destroy
+    image: image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines/openshift-pipeline-bootstrap
+    workingDir: /workspace/install
+    env:
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: aws-access-key-id
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: aws-secret-access-key
+    script: |
+      #!/usr/bin/env bash
+      /usr/local/bin/openshift-install destroy cluster  --log-level=debug || true
+
+  - name: openshift-install-create
+    env:
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: aws-access-key-id
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: aws-secret-access-key
+    image: image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines/openshift-pipeline-bootstrap
+    workingDir: /workspace/install
+    script: |
+      #!/usr/bin/env bash
+      /usr/local/bin/openshift-install create cluster --log-level=debug

@@ -36,6 +36,9 @@ recreate () {
 	done
 }
 
+# We do this so we can have some custom configuration in there, i.e: installing secret
+[[ -x ./local/run.sh ]] && source ./local/run.sh
+
 # We use the builder image for our building task until buildah can build without
 # privileged
 oc get scc privileged -o yaml|grep -q "- system:serviceaccount:${TARGET_NAMESPACE}:builder" ||
