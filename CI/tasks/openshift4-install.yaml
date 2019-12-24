@@ -128,6 +128,7 @@ spec:
       #!/usr/bin/env bash
       set -e
       /usr/local/bin/openshift-install create cluster --log-level=debug
+      cat metadata.json
 
   - name: openshift-install-save-artifacts
     env:
@@ -150,18 +151,23 @@ spec:
     workingDir: /workspace/install
     script: |
       #!/usr/bin/env bash
-      set -xeu
+      set -e
       gpg_args=
       key=
 
       function upload() {
-            curl -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
-                -F path=$(inputs.params.CLUSTER_NAME)/$(basename ${1}) \
-                -F file=@${1} \
-                $(inputs.params.UPLOADER_HOST)/upload
+        dest="$2"
+        [[ -z ${dest} ]] && dest="$(inputs.params.CLUSTER_NAME)/$(basename ${1})"
+        curl -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+          -F path=${dest} \
+          -F file=@${1} \
+          $(inputs.params.UPLOADER_HOST)/upload
       }
 
       [[ -n "$(inputs.params.UPLOADER_HOST)" && -n ${UPLOADER_PUBRING} && -n ${UPLOADER_USERNAME} && -n ${UPLOADER_PASSWORD} ]] || exit 0
+
+      # Upload metadata.json as soon
+      upload metadata.json
 
       echo "${UPLOADER_PUBRING}" > /tmp/pubring.pgp
       gpg --import /tmp/pubring.pgp
@@ -178,4 +184,4 @@ spec:
         upload ${encryptfile}.gpg
       done
 
-      upload metadata.json
+      upload auth/kubeconfig private/$(inputs.params.CLUSTER_NAME)/kubeconfig
