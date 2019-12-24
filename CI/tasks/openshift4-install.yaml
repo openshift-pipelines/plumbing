@@ -6,6 +6,10 @@ metadata:
 spec:
   inputs:
     params:
+    - name: CLUSTER_NAME
+      description: Cluster name
+      default: "openshift-pipelines-install"
+
     - name: BASE_DOMAIN
       description: Base domain of your cluster install
       default: "devcluster.openshift.com"
@@ -18,17 +22,13 @@ spec:
       description: AWS Region where to install
       default: "us-east-2"
 
-    - name: CLUSTER_NAME
-      description: Cluster name
-      default: "openshift-pipelines-install"
-
-    - name: SIMPLE_UPLOADER
-      description: If you have this https://github.com/chmouel/openshift-django-uploader/ installed then set it here.
-      default: ""
-
     - name: IMAGE_NAME
       description: Container image
       default: "image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines/openshift-pipeline-bootstrap"
+
+    - name: UPLOADER_HOST
+      description: If you have this https://github.com/chmouel/openshift-django-uploader/ installed then set it here.
+      default: ""
 
   steps:
   - name: openshift-install-config
@@ -87,7 +87,8 @@ spec:
       pullSecret: '$REGISTRY_TOKEN'
       sshKey: '$PUBLIC_SSH_KEY'
       EOF
-  - name: openshift-install-destroy
+
+  - name: openshift-install-clean-previous-install
     image: $(inputs.params.IMAGE_NAME)
     workingDir: /workspace/install
     env:
@@ -103,6 +104,10 @@ spec:
           key: aws-secret-access-key
     script: |
       #!/usr/bin/env bash
+      set -eu
+      [[ -n "$(inputs.params.UPLOADER_HOST)" ]] || exit 0
+      curl -f -O $(inputs.params.UPLOADER_HOST)/$(inputs.params.CLUSTER_NAME)/metadata.json || exit 0
+      echo "Trying to delete previous cluster (if it wasn't reaped already)"
       /usr/local/bin/openshift-install destroy cluster  --log-level=debug || true
 
   - name: openshift-install-create
@@ -121,4 +126,56 @@ spec:
     workingDir: /workspace/install
     script: |
       #!/usr/bin/env bash
+      set -e
       /usr/local/bin/openshift-install create cluster --log-level=debug
+
+  - name: openshift-install-save-artifacts
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    - name: UPLOADER_PUBRING
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: upload-pubring.gpg
+    image: $(inputs.params.IMAGE_NAME)
+    workingDir: /workspace/install
+    script: |
+      #!/usr/bin/env bash
+      set -xeu
+      gpg_args=
+      key=
+
+      function upload() {
+            curl -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+                -F path=$(inputs.params.CLUSTER_NAME)/$(basename ${1}) \
+                -F file=@${1} \
+                $(inputs.params.UPLOADER_HOST)/upload
+      }
+
+      [[ -n "$(inputs.params.UPLOADER_HOST)" && -n ${UPLOADER_PUBRING} && -n ${UPLOADER_USERNAME} && -n ${UPLOADER_PASSWORD} ]] || exit 0
+
+      echo "${UPLOADER_PUBRING}" > /tmp/pubring.pgp
+      gpg --import /tmp/pubring.pgp
+      for key in $(gpg --list-public-keys --list-options no-show-photos --fingerprint --with-colons|awk -F: '$1 ~ /fpr/ {print $10}');do
+        gpg_args="$gpg_args -r$key"
+      done
+
+      bzip2 -9c .openshift_install.log > auth/install.log.bz2
+      tail -2 .openshift_install.log > auth/webaccess
+
+      for encryptfile in auth/*;do
+        [[ -f ${encryptfile} ]] || continue
+        gpg --batch -e --trust-model=always ${gpg_args}  ${encryptfile}
+        upload ${encryptfile}.gpg
+      done
+
+      upload metadata.json
