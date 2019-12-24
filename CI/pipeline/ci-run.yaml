@@ -6,7 +6,10 @@ metadata:
 spec:
   pipelineRef:
     name: openshift-pipeline-ci
-  serviceAccountName: 'builder'
+  serviceAccountName: builder
+  params:
+    - name: UPLOADER_HOST
+      value: http://uploader-osinstall.apps.samchmou2.devcluster.openshift.com
   resources:
   - name: plumbing-git
     resourceRef:
