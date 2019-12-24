@@ -15,7 +15,6 @@ spec:
       type: image
 
   tasks:
-
   - name: build-bootstrap
     taskRef:
       name: buildah
