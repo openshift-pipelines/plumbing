@@ -17,9 +17,9 @@ install_catalog_tasks() {
     done
 }
 
-install_local_resources() {
-    echo "------ Installing resources to run bootstrap"
-    for resource in resources/*.yaml;do
+install_local_stuff() {
+    echo "------ Installing local templates to run bootstrap"
+    for resource in tasks/*.yaml resources/*.yaml;do
         # We may use something fancier than sed (i:e kustomize) in the future
         sed -e "s/%TARGET_NAMESPACE%/${TARGET_NAMESPACE}/g" ${resource} | \
             kubectl apply -f- -n ${TARGET_NAMESPACE}
@@ -49,7 +49,7 @@ install() {
 	kubectl create ns ${TARGET_NAMESPACE} 2>/dev/null || true
 
 	install_catalog_tasks
-	install_local_resources
+	install_local_stuff
 }
 
 
