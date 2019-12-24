@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1alpha1
 kind: Task
 metadata:
-  name: os4-cluster-install
+  name: openshift4-install
 spec:
   inputs:
     params:
