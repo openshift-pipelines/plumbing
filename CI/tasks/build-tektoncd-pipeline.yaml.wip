@@ -1,0 +1,27 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: build-tektoncd-pipeline
+spec:
+  inputs:
+    - name: UPLOADER_HOST
+      description: set this to https://github.com/chmouel/openshift-django-uploader/
+  steps:
+  - name: build-tektoncd-pipeline
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    image: $(inputs.params.IMAGE_NAME)
+    workingDir: /workspace/build
+    script: |
+      #!/usr/bin/env bash
+      set -ex

@@ -106,6 +106,7 @@ spec:
       #!/usr/bin/env bash
       set -eu
       [[ -n "$(inputs.params.UPLOADER_HOST)" ]] || exit 0
+      ls -R /workspace/
       python /workspace/plumbing/CI/misc/openshift-install-cleanup-route53.records.py -f $(inputs.params.CLUSTER_NAME)
       curl -s -O $(inputs.params.UPLOADER_HOST)/$(inputs.params.CLUSTER_NAME)/metadata.json || exit
       echo "Trying to delete previous cluster (if it wasn't reaped already)"
