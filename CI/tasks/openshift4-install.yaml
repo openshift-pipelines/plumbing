@@ -5,6 +5,9 @@ metadata:
   name: openshift4-install
 spec:
   inputs:
+    resources:
+      - name: plumbing-git
+        type: git
     params:
     - name: CLUSTER_NAME
       description: Cluster name
@@ -106,8 +109,7 @@ spec:
       #!/usr/bin/env bash
       set -eu
       [[ -n "$(inputs.params.UPLOADER_HOST)" ]] || exit 0
-      ls -R /workspace/
-      python /workspace/plumbing/CI/misc/openshift-install-cleanup-route53.records.py -f $(inputs.params.CLUSTER_NAME)
+      python $(inputs.resources.plumbing-git.path)/CI/misc/openshift-install-cleanup-route53.records.py -f $(inputs.params.CLUSTER_NAME)
       curl -s -O $(inputs.params.UPLOADER_HOST)/$(inputs.params.CLUSTER_NAME)/metadata.json || exit
       echo "Trying to delete previous cluster (if it wasn't reaped already)"
       /usr/local/bin/openshift-install destroy cluster  --log-level=debug || true
@@ -164,7 +166,7 @@ spec:
         curl -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
           -F path=${dest} \
           -F file=@${1} \
-          $(inputs.params.UPLOADER_HOST)/upload
+          $(inputs.params.UPLOADER_HOST)/upload/
       }
 
       [[ -n "$(inputs.params.UPLOADER_HOST)" && -n ${UPLOADER_PUBRING} && -n ${UPLOADER_USERNAME} && -n ${UPLOADER_PASSWORD} ]] || exit 0

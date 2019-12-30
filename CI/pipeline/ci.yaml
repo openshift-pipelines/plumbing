@@ -35,6 +35,10 @@ spec:
     taskRef:
       name: openshift4-install
     runAfter: [build-bootstrap]
+    resources:
+      inputs:
+        - name: plumbing-git
+          resource: plumbing-git
     params:
       - name: IMAGE_NAME
         value: image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines/openshift-pipeline-bootstrap
