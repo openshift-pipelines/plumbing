@@ -151,11 +151,12 @@ spec:
     workingDir: /workspace/install
     script: |
       #!/usr/bin/env bash
-      set -e
+      set -ex
       gpg_args=
       key=
 
       function upload() {
+        set -x
         dest="$2"
         [[ -z ${dest} ]] && dest="$(inputs.params.CLUSTER_NAME)/$(basename ${1})"
         curl -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
@@ -166,7 +167,7 @@ spec:
 
       [[ -n "$(inputs.params.UPLOADER_HOST)" && -n ${UPLOADER_PUBRING} && -n ${UPLOADER_USERNAME} && -n ${UPLOADER_PASSWORD} ]] || exit 0
 
-      # Upload metadata.json as soon
+      # Upload metadata.json asap
       upload metadata.json
 
       echo "${UPLOADER_PUBRING}" > /tmp/pubring.pgp
