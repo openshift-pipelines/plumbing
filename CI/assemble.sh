@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Main script, we could probably convert all of it to a nice kustomize template,
+# but i let this for some future play time.
 set -eu
 
 # Target namespace on the cluster
