@@ -13,6 +13,13 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 #
+# Python script using the boto library to delete route53 zones and records,
+# cause the awscli seems too sucky with deletion (you need to pass a big xml
+# blob to it)
+#
+# You need the credentials setup with whatever means in ~/.aws or via env
+# variables.
+#
 # After the 'reaper' has reaped our openshift install in the aws account, it
 # forget to delete some A records, so the reinstall fails :((
 # let's be helpful and do it for the reaper....
@@ -64,7 +71,7 @@ def delete_record(zonename, recordname):
         print("Could not find record " + recordname)
         return
 
-    print("Record " + recordname + " has been deleted.")
+    print("Record " + record.name + " has been deleted.")
     zone.delete_a(record.name)
 
 
