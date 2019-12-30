@@ -4,5 +4,3 @@ RUN yum -y update && yum -y install python-boto && yum -y clean all && rm -rf /v
 
 ADD CI/bootstrap/scripts/openshift-install-download.sh  /usr/local/bin/
 RUN /usr/local/bin/openshift-install-download.sh
-
-COPY . /plumbing
