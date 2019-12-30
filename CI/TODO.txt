@@ -1,0 +1,1 @@
+* Only generate the bootstrap task (the base task for all others) when a change to the repo is made.
