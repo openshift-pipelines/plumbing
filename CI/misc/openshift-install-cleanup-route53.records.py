@@ -64,7 +64,7 @@ def delete_record(zonename, recordname):
 
     zone = route53.get_zone(zonename)
     if not zone:
-        raise NoGoZoneIsANogo("Could not find zone for " + target)
+        raise NoGoZoneIsANogo("Could not find zone for " + zonename)
 
     record = zone.get_a(recordname)
     if not record:
