@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+####
+#### CONFIGS:
+#### ~/.aws/credentials - your AWS credentials config file (usually openshift developper aws, see mojo on how to get them)
+#### ~/.uploader.cfg :
+#### 		uploader-username - username for uploader
+#### 		uploader-password - password for uploader
+#### ~/.ssh/id_ed25519.pub : Your public SSH key
+#### ~/.docker/openshift-install.json : Your registry config credentials (from https://install.openshift.com)
+#### ~/.gnupg/openshift-pipeline-team-pubring.gpg : The public keyring of the users you want to give encrypt files to
+
+
+
+oc delete secret openshift-install 2>/dev/null >/dev/null
+oc create secret generic openshift-install \
+   --from-literal="$(grep aws_access_key ~/.aws/credentials|sed 's/_/-/g')" \
+   --from-literal="$(grep aws_secret_access_key ~/.aws/credentials|sed 's/_/-/g')" \
+   --from-literal="$(grep uploader-username ~/.uploader.cfg)" \
+   --from-literal="$(grep uploader-password ~/.uploader.cfg)" \
+   --from-file=public-ssh-key="${HOME}/.ssh/id_ed25519.pub" \
+   --from-file=registry-token="${HOME}/.docker/openshift-install.json" \
+   --from-file=upload-pubring.gpg="${HOME}/.gnupg/openshift-pipeline-team-pubring.gpg" \
