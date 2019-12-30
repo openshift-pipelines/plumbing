@@ -5,8 +5,18 @@ metadata:
   name: build-tektoncd-pipeline
 spec:
   inputs:
+    resources:
+      - name: plumbing-git
+        type: git
+      - name: tektoncd-pipeline-git
+        type: git
+    params:
     - name: UPLOADER_HOST
-      description: set this to https://github.com/chmouel/openshift-django-uploader/
+      description: GO Simple Uploader hostname
+
+    - name: IMAGE_NAME
+      description: Container image
+      default: "image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines/openshift-pipeline-bootstrap"
   steps:
   - name: build-tektoncd-pipeline
     env:
