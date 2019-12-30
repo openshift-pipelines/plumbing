@@ -10,9 +10,7 @@
 #### ~/.docker/openshift-install.json : Your registry config credentials (from https://install.openshift.com)
 #### ~/.gnupg/openshift-pipeline-team-pubring.gpg : The public keyring of the users you want to give encrypt files to
 
-
-
-oc delete secret openshift-install 2>/dev/null >/dev/null
+oc delete secret openshift-install 2>/dev/null >/dev/null || true
 oc create secret generic openshift-install \
    --from-literal="$(grep aws_access_key ~/.aws/credentials|sed 's/_/-/g')" \
    --from-literal="$(grep aws_secret_access_key ~/.aws/credentials|sed 's/_/-/g')" \
