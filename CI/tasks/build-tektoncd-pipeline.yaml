@@ -86,6 +86,29 @@ spec:
         PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-pipeline-git.path) \
         REGISTRY_URL=${REGISTRY_URL} \
         REGISTRY_AUTH_FILE=${HOME}/.docker/config.json
+
+  - name: generate-release-yaml
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    image: registry.access.redhat.com/ubi8/ubi:latest
+    workingDir: $(inputs.resources.plumbing-git.path)
+    script: |
+      #!/usr/bin/env bash
+      set -ex
+      bash CI/tasks/build-tektoncd-pipeline/resolv-yamls.sh \
+        $(inputs.resources.tektoncd-pipeline-git.path) \
+        /workspace/output/release.yaml \
+        image-registry.openshift-image-registry.svc:5000/tekton-pipelines
+
   volumes:
   - name: varlibcontainers
     emptyDir: {}
