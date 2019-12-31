@@ -4,7 +4,11 @@
 
   Just look at the [local.sh.sample](local.sh.sample), collect all the
   credentials needed from there, and run the `assemble.sh` script. You can then
-  use the `tkn` CLI to track the update of the deployment.
+  use the [`tkn`](github.com/tektoncd/cli) CLI to track the update of the deployment like this :
+
+  ```
+  tkn pipeline logs openshift-pipeline-ci -f
+  ```
 
 * How do I run a certain task without rerun the full pipeline?
 
