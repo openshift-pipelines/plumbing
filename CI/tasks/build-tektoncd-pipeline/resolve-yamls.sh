@@ -72,7 +72,7 @@ function generate_pipeline_resources() {
     resolve_resources ${pipeline_dir}/config $output_file noignore $image_prefix $image_tag
 
     # Appends addon configs such as prometheus monitoring config
-    for yaml in $(find $(git rev-parse --show-toplevel)/CI/tasks/build-tektoncd-pipeline/addons -name "*.yaml" | sort); do
+    for yaml in $(find CI/tasks/build-tektoncd-pipeline/addons -name "*.yaml" | sort); do
         echo "---" >> $output_file
         cat ${yaml} >> $output_file
     done
