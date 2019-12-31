@@ -40,12 +40,12 @@ function resolve_resources() {
             # This is CI which get built directly to the user registry namespace i.e: $OPENSHIFT_BUILD_NAMESPACE
             # The output would look like this :
             # internal-registry:5000/usernamespace:tektoncd-pipeline-bash
-            gsed -e "s%tinaon/true%${registry_prefix}/nop%" \
-                 -e "s%busybox%registry.access.redhat.com/ubi8/ubi-minimal:latest%" \
-                 -e 's%\(.* image: \)\(github.com\)\(.*\/\)\(test\/\)\(.*\)%\1\2 \3\4test-\5%' \
-                 -e "s%\(.* image: \)\(github.com\)\(.*\/\)\(.*\)%\1 ""$registry_prefix"'/\4%'  \
-                 -re "s,github.com/tektoncd/pipeline/cmd/${image_regexp},${registry_prefix}/\1,g" \
-                 $yaml > ${TMP}
+            sed -e "s%tinaon/true%${registry_prefix}/nop%" \
+                -e "s%busybox%registry.access.redhat.com/ubi8/ubi-minimal:latest%" \
+                -e 's%\(.* image: \)\(github.com\)\(.*\/\)\(test\/\)\(.*\)%\1\2 \3\4test-\5%' \
+                -e "s%\(.* image: \)\(github.com\)\(.*\/\)\(.*\)%\1 ""$registry_prefix"'/\4%'  \
+                -re "s,github.com/tektoncd/pipeline/cmd/${image_regexp},${registry_prefix}/\1,g" \
+                $yaml > ${TMP}
         fi
 
         # Adding the labels: openshift.io/cluster-monitoring on Namespace to add the cluster-monitoring
