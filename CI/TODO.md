@@ -7,3 +7,5 @@
 * Build special case nop image too
 * Push to quay.io release.yaml + nightly images when succeed
 * Handle multiple openshift targets
+* Rewrite resolv-yamls.sh, it's still as bad as before and didn't have the
+  courage to get my head around it. (just made it work for the new CI)
