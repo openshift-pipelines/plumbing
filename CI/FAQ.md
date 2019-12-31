@@ -1,3 +1,4 @@
+# FAQ
 
 * How do I run this locally from my desktop?
 
@@ -19,9 +20,9 @@
   ```
 
 * If you have an error like this :
-```
-securitycontextconstraints.security.openshift.io/privileged added to: ["system:serviceaccount:ci-openshift-pipelines:builder"]
------- Installing catalog tasks
-error: unable to recognize "STDIN": no matches for kind "Task" in version "tekton.dev/v1alpha1"
-```
-  It probabkly means you don't have tekton installed
+  ```
+  securitycontextconstraints.security.openshift.io/privileged added to: ["system:serviceaccount:ci-openshift-pipelines:builder"]
+  ------ Installing catalog tasks
+      error: unable to recognize "STDIN": no matches for kind "Task" in version "tekton.dev/v1alpha1"
+  ```
+  It probably means you don't have tekton installed
