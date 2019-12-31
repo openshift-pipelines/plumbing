@@ -7,10 +7,12 @@ metadata:
 spec:
   params:
     - name: UPLOADER_HOST
+
   resources:
     - name: plumbing-git
       type: git
-
+    - name: tektoncd-pipeline-git
+      type: git
     - name: bootstrap-image
       type: image
 
@@ -42,5 +44,19 @@ spec:
     params:
       - name: IMAGE_NAME
         value: image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines/openshift-pipeline-bootstrap
+      - name: UPLOADER_HOST
+        value: $(params.UPLOADER_HOST)
+
+  - name: build-binaries
+    taskRef:
+      name: build-tektoncd-pipeline
+    runAfter: [build-bootstrap]
+    resources:
+      inputs:
+        - name: plumbing-git
+          resource: plumbing-git
+        - name: tektoncd-pipeline-git
+          resource: tektoncd-pipeline-git
+    params:
       - name: UPLOADER_HOST
         value: $(params.UPLOADER_HOST)

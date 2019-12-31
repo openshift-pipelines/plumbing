@@ -42,8 +42,7 @@ create_dockerfiles:
 
 container_build:
 	@echo "Building containers..."
-	@pushd $(OUTPUT_DIR); \
-	set -x ;\
+	@pushd $(OUTPUT_DIR); set -e ;\
 	  for dfile in */;do \
 		cd $${dfile};\
 			$(BUILDAH) build -t $(REGISTRY_URL)/`basename $$dfile` -f Dockerfile . ;\

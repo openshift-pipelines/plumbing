@@ -13,9 +13,6 @@ spec:
     params:
     - name: UPLOADER_HOST
       description: GO Simple Uploader hostname
-    - name: IMAGE_NAME
-      description: Container image
-      default: "image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines/openshift-pipeline-bootstrap"
   steps:
   - name: build-binaries-and-dockerfiles
     env:
@@ -29,7 +26,7 @@ spec:
         secretKeyRef:
           name: openshift-install
           key: uploader-password
-    image: $(inputs.params.IMAGE_NAME)
+    image: openshift/origin-release:golang-1.13
     workingDir: $(inputs.resources.plumbing-git.path)
     script: |
       #!/usr/bin/env bash

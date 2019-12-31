@@ -17,3 +17,6 @@ spec:
   - name: bootstrap-image
     resourceRef:
       name: bootstrap-image
+  - name: tektoncd-pipeline-git
+    resourceRef:
+      name: tektoncd-pipeline-git
