@@ -15,14 +15,14 @@ BUILDAH := buildah
 build_binary:
 	@echo "Building binaries..."
 	@mkdir -p $(OUTPUT_DIR)/bin
-	pushd $(PIPELINE_REPOSITORY) >/dev/null &&  \
+	@set -e;pushd $(PIPELINE_REPOSITORY) >/dev/null &&  \
 		env GOBIN=$(OUTPUT_DIR)/bin \
 		    go install $(PIPELINE_REPOSITORY)/cmd/* $(ADDN_IMAGES) ; \
 	popd >/dev/null
 
 create_dockerfiles:
 	@echo "Creating dockerfiles"
-	@for cmd in $(ALL_BINARIES) $(ADDN_IMAGES);do \
+	@set -e;for cmd in $(ALL_BINARIES) $(ADDN_IMAGES);do \
 		bcmd=`basename $$cmd` ;\
 		for extra in $(IMAGES_EXTRAS);do \
 			[[ $$bcmd == $${extra} ]] && break || extra="" ; \
