@@ -5,23 +5,28 @@ PIPELINE_REPOSITORY=/workspace/tektoncd-pipeline-git
 # If you are testing it on osx you can override it with BUILDAH=docker
 BUILDAH := buildah
 
-# TODO:
+# TODO: remove this REGISTRY URL to something else
 REGISTRY_URL=default-route-openshift-image-registry.apps.samchmou2.devcluster.openshift.com
-ADDN_IMAGES=./vendor/github.com/GoogleCloudPlatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher
-IMAGES_EXTRAS=creds-init git-init # the images that needs extra cares
-ALL_BINARIES=$(wildcard $(PIPELINE_REPOSITORY)/cmd/*)
-GOOS=linux
-CGO_ENABLED=0
 
-build_binary:
+# The addons images which means shipped in ./vendor files and not in ./cmd
+ADDN_IMAGES=./vendor/github.com/GoogleCloudPlatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher
+
+# The image which has extras, we are going to use `Dockerfile.extras` for it
+# instead of the very minimal `Dockerfiles`
+IMAGES_EXTRAS=creds-init git-init # the images that needs extra cares
+
+# This would get all binary from cmd/ so no need to specify them manually :)
+ALL_BINARIES=$(wildcard $(PIPELINE_REPOSITORY)/cmd/*)
+
+build_binary: ## Build TektonCD pipelines binaries
 	@echo "Building binaries..."
 	@mkdir -p $(OUTPUT_DIR)/bin
 	@set -x;pushd $(PIPELINE_REPOSITORY) >/dev/null &&  \
-		env GOOS=linux GOBIN=$(OUTPUT_DIR)/bin \
+		env GOBIN=$(OUTPUT_DIR)/bin \
 		    go install $(PIPELINE_REPOSITORY)/cmd/* $(ADDN_IMAGES) ; \
 	popd >/dev/null
 
-create_dockerfiles:
+create_dockerfiles: ## Create Dockerfiles for binaries, it usually need to be run after build_binary but not enforced
 	@echo "Creating dockerfiles"
 	@set -e;for cmd in $(ALL_BINARIES) $(ADDN_IMAGES);do \
 		bcmd=`basename $$cmd` ;\
@@ -40,7 +45,7 @@ create_dockerfiles:
 	done
 	@rmdir $(OUTPUT_DIR)/bin
 
-container_build:
+container_build: ## Use buildah to start building the containers
 	@echo "Building containers..."
 	@pushd $(OUTPUT_DIR); set -e ;\
 	  for dfile in */;do \
@@ -50,7 +55,10 @@ container_build:
 	  done ;\
 	popd >/dev/null
 
-clean:
+clean: ## Clean our generated artifacts
 	@rm -rf $(OUTPUT_DIR)
+
+help: ## Display this help screen
+	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: build_binary create_dockerfiles container_build clean
