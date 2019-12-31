@@ -60,7 +60,7 @@ container_push: ## Use buildah to push the containers to the $REGISTRY_URL
 	@set -e ;pushd $(OUTPUT_DIR);\
 	  for dfile in */;do \
 		cd $${dfile};\
-			$(BUILDAH) push -t $(REGISTRY_URL)/`basename $$dfile` -f Dockerfile . ;\
+			$(BUILDAH) push $(REGISTRY_URL)/`basename $$dfile` ;\
 		cd .. ;\
 	  done ;\
 	popd >/dev/null
