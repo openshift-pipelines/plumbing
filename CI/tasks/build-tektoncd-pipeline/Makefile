@@ -55,6 +55,16 @@ container_build: ## Use buildah to start building the containers
 	  done ;\
 	popd >/dev/null
 
+container_push: ## Use buildah to push the containers to the $REGISTRY_URL
+	@echo "Pushing containers..."
+	@pushd $(OUTPUT_DIR); set -e ;\
+	  for dfile in */;do \
+		cd $${dfile};\
+			$(BUILDAH) push -t $(REGISTRY_URL)/`basename $$dfile` -f Dockerfile . ;\
+		cd .. ;\
+	  done ;\
+	popd >/dev/null
+
 clean: ## Clean our generated artifacts
 	@rm -rf $(OUTPUT_DIR)
 
