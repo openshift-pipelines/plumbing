@@ -50,7 +50,7 @@ container_build: ## Use buildah to start building the containers
 	@set -e; pushd $(OUTPUT_DIR);\
 	  for dfile in */;do \
 		cd $${dfile};\
-			$(BUILDAH) build -t $(REGISTRY_URL)/`basename $$dfile` -f Dockerfile . ;\
+			$(BUILDAH) bud -t $(REGISTRY_URL)/`basename $$dfile` -f Dockerfile . ;\
 		cd .. ;\
 	  done ;\
 	popd >/dev/null
