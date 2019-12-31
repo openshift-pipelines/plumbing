@@ -22,6 +22,11 @@ action=${1:-save}
     oc rsh --shell=/bin/bash -c nginx -n osinstall ${pod} $2
 }
 
+[[ $action == logs ]] && {
+	oc logs -n osinstall  --all-containers -f ${pod}
+}
+
+
 [[ $action == print ]] && {
 	echo http://$(oc get route -n osinstall uploader -o jsonpath={.spec.host})
 }
