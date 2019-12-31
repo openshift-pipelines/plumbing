@@ -103,11 +103,24 @@ spec:
     workingDir: $(inputs.resources.plumbing-git.path)
     script: |
       #!/usr/bin/env bash
-      set -ex
-      bash CI/tasks/build-tektoncd-pipeline/resolv-yamls.sh \
+      set -e
+
+      #TODO: Commonalize in shell script
+      function upload() {
+        dest="$2"
+        [[ -z ${dest} ]] && dest="$(inputs.params.CLUSTER_NAME)/$(basename ${1})"
+        curl -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+          -F path=${dest} \
+          -F file=@${1} \
+          $(inputs.params.UPLOADER_HOST)/upload/
+      }
+
+      bash CI/tasks/build-tektoncd-pipeline/resolve-yamls.sh \
         $(inputs.resources.tektoncd-pipeline-git.path) \
         /workspace/output/release.yaml \
         image-registry.openshift-image-registry.svc:5000/tekton-pipelines
+
+      upload /workspace/output/release.yaml
 
   volumes:
   - name: varlibcontainers

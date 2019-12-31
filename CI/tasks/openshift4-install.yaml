@@ -175,6 +175,7 @@ spec:
       # Upload: by default it will upload the file as specified in "$1" to
       # "$CLUSTER_NAME/basename of $1" if you specify a $2 it will upload the $1
       # file to the destination specified in there.
+      # TODO: move to shell script so we can commonalize
       function upload() {
         dest="$2"
         [[ -z ${dest} ]] && dest="$(inputs.params.CLUSTER_NAME)/$(basename ${1})"
