@@ -13,12 +13,11 @@ spec:
     params:
     - name: UPLOADER_HOST
       description: GO Simple Uploader hostname
-
     - name: IMAGE_NAME
       description: Container image
       default: "image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines/openshift-pipeline-bootstrap"
   steps:
-  - name: build-tektoncd-pipeline
+  - name: build-binaries-and-dockerfiles
     env:
     - name: UPLOADER_USERNAME
       valueFrom:
@@ -31,7 +30,11 @@ spec:
           name: openshift-install
           key: uploader-password
     image: $(inputs.params.IMAGE_NAME)
-    workingDir: /workspace/build
+    workingDir: $(inputs.resources.plumbing-git.path)
     script: |
       #!/usr/bin/env bash
       set -ex
+      make -C $(inputs.resources.plumbing-git.path)/CI/tasks/build-tektoncd-pipeline \
+        build_binary create_dockerfiles \
+        PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-pipeline-git.path) \
+        OUTPUT_DIR=/workspace/output
