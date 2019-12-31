@@ -206,7 +206,8 @@ spec:
       # kubeconfig.
       cp auth/kubeconfig /tmp/registry-kubeconfig
       export KUBECONFIG=/tmp/registry-kubeconfig
-      oc new-project tekton-pipelines
+      oc new-project ci-openshift-pipelines
+      oc policy add-role-to-user system:image-puller system:serviceaccount:tekton-pipelines:default -n ci-openshift-pipelines
       oc login -u kubeadmin -p "$(cat auth/kubeadmin-password)" --insecure-skip-tls-verify
       oc patch configs.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge
       sleep 2
