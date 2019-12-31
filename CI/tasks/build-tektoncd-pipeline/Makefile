@@ -21,7 +21,7 @@ ALL_BINARIES=$(wildcard $(PIPELINE_REPOSITORY)/cmd/*)
 build_binary: ## Build TektonCD pipelines binaries
 	@echo "Building binaries..."
 	@mkdir -p $(OUTPUT_DIR)/bin
-	@set -x;pushd $(PIPELINE_REPOSITORY) >/dev/null &&  \
+	@set -e;pushd $(PIPELINE_REPOSITORY) >/dev/null &&  \
 		env GOBIN=$(OUTPUT_DIR)/bin \
 		    go install $(PIPELINE_REPOSITORY)/cmd/* $(ADDN_IMAGES) ; \
 	popd >/dev/null
@@ -47,7 +47,7 @@ create_dockerfiles: ## Create Dockerfiles for binaries, it usually need to be ru
 
 container_build: ## Use buildah to start building the containers
 	@echo "Building containers..."
-	@pushd $(OUTPUT_DIR); set -e ;\
+	@set -e; pushd $(OUTPUT_DIR);\
 	  for dfile in */;do \
 		cd $${dfile};\
 			$(BUILDAH) build -t $(REGISTRY_URL)/`basename $$dfile` -f Dockerfile . ;\
@@ -57,7 +57,7 @@ container_build: ## Use buildah to start building the containers
 
 container_push: ## Use buildah to push the containers to the $REGISTRY_URL
 	@echo "Pushing containers..."
-	@pushd $(OUTPUT_DIR); set -e ;\
+	@set -e ;pushd $(OUTPUT_DIR);\
 	  for dfile in */;do \
 		cd $${dfile};\
 			$(BUILDAH) push -t $(REGISTRY_URL)/`basename $$dfile` -f Dockerfile . ;\
