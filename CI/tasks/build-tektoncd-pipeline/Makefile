@@ -2,21 +2,22 @@
 OUTPUT_DIR=/workspace/build-pipelines/
 PIPELINE_REPOSITORY=/workspace/tektoncd-pipeline-git
 
-CGO_ENABLED=0
-ADDN_IMAGES=./vendor/github.com/GoogleCloudPlatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher
-IMAGES_EXTRAS=creds-init git-init
-ALL_BINARIES=$(wildcard $(PIPELINE_REPOSITORY)/cmd/*)
-# TODO: proper
-REGISTRY_URL=default-route-openshift-image-registry.apps.samchmou2.devcluster.openshift.com
-
 # If you are testing it on osx you can override it with BUILDAH=docker
 BUILDAH := buildah
+
+# TODO:
+REGISTRY_URL=default-route-openshift-image-registry.apps.samchmou2.devcluster.openshift.com
+ADDN_IMAGES=./vendor/github.com/GoogleCloudPlatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher
+IMAGES_EXTRAS=creds-init git-init # the images that needs extra cares
+ALL_BINARIES=$(wildcard $(PIPELINE_REPOSITORY)/cmd/*)
+GOOS=linux
+CGO_ENABLED=0
 
 build_binary:
 	@echo "Building binaries..."
 	@mkdir -p $(OUTPUT_DIR)/bin
-	@set -e;pushd $(PIPELINE_REPOSITORY) >/dev/null &&  \
-		env GOBIN=$(OUTPUT_DIR)/bin \
+	@set -x;pushd $(PIPELINE_REPOSITORY) >/dev/null &&  \
+		env GOOS=linux GOBIN=$(OUTPUT_DIR)/bin \
 		    go install $(PIPELINE_REPOSITORY)/cmd/* $(ADDN_IMAGES) ; \
 	popd >/dev/null
 
