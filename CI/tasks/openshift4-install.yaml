@@ -26,8 +26,7 @@ spec:
       default: "us-east-2"
 
     - name: IMAGE_NAME
-      description: Container image
-      default: "image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines/openshift-pipeline-bootstrap"
+      description: The bootstrap image with all the tools needed
 
     - name: UPLOADER_HOST
       description: If you have this https://github.com/chmouel/openshift-django-uploader/ installed then set it here.
