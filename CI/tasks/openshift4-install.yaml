@@ -154,6 +154,8 @@ spec:
     workingDir: /workspace/install
     script: |
       #!/usr/bin/env bash
+      # We should probably set it in an external script but that's much easier
+      # to iterate here atm.
       set -ex
       gpg_args=
       key=
@@ -189,3 +191,12 @@ spec:
       done
 
       upload auth/kubeconfig private/$(inputs.params.CLUSTER_NAME)/kubeconfig
+
+      set -x
+      export KUBECONFIG=auth/kubeconfig
+      oc login -u kubeadmin -p "$(cat auth/kubeadmin-password)" --insecure-skip-tls-verify
+      oc patch configs.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge
+      oc registry --insecure=true login --to=auth/registry.config.json
+
+      #TODO: encrypted to public too
+      upload auth/kubeconfig private/$(inputs.params.CLUSTER_NAME)/config.json
