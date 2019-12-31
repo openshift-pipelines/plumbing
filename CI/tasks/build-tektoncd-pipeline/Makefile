@@ -15,12 +15,12 @@ BUILDAH := buildah
 build_binary:
 	@echo "Building binaries..."
 	@mkdir -p $(OUTPUT_DIR)/bin
-	@pushd $(PIPELINE_REPOSITORY) >/dev/null &&  \
-		env GO111MODULE=off GOBIN=$(OUTPUT_DIR)/bin \
-			go install $(PIPELINE_REPOSITORY)/cmd/* $(ADDN_IMAGES) ; \
+	pushd $(PIPELINE_REPOSITORY) >/dev/null &&  \
+		env GOBIN=$(OUTPUT_DIR)/bin \
+		    go install $(PIPELINE_REPOSITORY)/cmd/* $(ADDN_IMAGES) ; \
 	popd >/dev/null
 
-create_dockerfiles: build_binary
+create_dockerfiles:
 	@echo "Creating dockerfiles"
 	@for cmd in $(ALL_BINARIES) $(ADDN_IMAGES);do \
 		bcmd=`basename $$cmd` ;\
@@ -39,7 +39,7 @@ create_dockerfiles: build_binary
 	done
 	@rmdir $(OUTPUT_DIR)/bin
 
-container_build: create_dockerfiles
+container_build:
 	@echo "Building containers..."
 	@pushd $(OUTPUT_DIR); \
 	set -x ;\
