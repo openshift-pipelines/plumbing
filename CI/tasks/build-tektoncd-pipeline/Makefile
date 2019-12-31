@@ -61,7 +61,7 @@ container_push: ## Use buildah to push the containers to the $REGISTRY_URL
 	@set -e ;pushd $(OUTPUT_DIR);\
 	  for dfile in */;do \
 		cd $${dfile};\
-			$(BUILDAH) push --auth-file=$(REGISTRY_AUTH_FILE) \
+			$(BUILDAH) push --authfile=$(REGISTRY_AUTH_FILE) \
 			--tls-verify=false $(REGISTRY_URL)/`basename $$dfile` \
 		    docker://$(REGISTRY_URL)/`basename $$dfile` ;\
 		cd .. ;\
