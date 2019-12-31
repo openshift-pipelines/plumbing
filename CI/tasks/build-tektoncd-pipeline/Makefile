@@ -8,6 +8,7 @@ BUILDAH := buildah
 # TODO: remove this REGISTRY URL to something else
 REGISTRY_URL := default-route-openshift-image-registry.apps.samchmou2.devcluster.openshift.com
 REGISTRY_AUTH_FILE := ~/.docker/config.json
+REGISTRY_NAMESPACE := ci-openshift-pipelines
 
 # The addons images which means shipped in ./vendor files and not in ./cmd
 ADDN_IMAGES=./vendor/github.com/GoogleCloudPlatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher
@@ -51,7 +52,7 @@ container_build: ## Use buildah to start building the containers
 	@set -e; pushd $(OUTPUT_DIR);\
 	  for dfile in */;do \
 		cd $${dfile};\
-			$(BUILDAH) bud -t $(REGISTRY_URL)/`basename $$dfile` -f Dockerfile . ;\
+			$(BUILDAH) bud -t $(REGISTRY_URL)/$(REGISTRY_NAMESPACE)/`basename $$dfile` -f Dockerfile . ;\
 		cd .. ;\
 	  done ;\
 	popd >/dev/null
@@ -61,9 +62,7 @@ container_push: ## Use buildah to push the containers to the $REGISTRY_URL
 	@set -e ;pushd $(OUTPUT_DIR);\
 	  for dfile in */;do \
 		cd $${dfile};\
-			$(BUILDAH) push --authfile=$(REGISTRY_AUTH_FILE) \
-			--tls-verify=false $(REGISTRY_URL)/`basename $$dfile` \
-		    docker://$(REGISTRY_URL)/`basename $$dfile` ;\
+			$(BUILDAH) push --tls-verify=false $(REGISTRY_URL)/$(REGISTRY_NAMESPACE)/`basename $$dfile` ;\
 		cd .. ;\
 	  done ;\
 	popd >/dev/null

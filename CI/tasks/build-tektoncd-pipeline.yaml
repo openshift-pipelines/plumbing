@@ -13,6 +13,11 @@ spec:
     params:
     - name: UPLOADER_HOST
       description: GO Simple Uploader hostname
+
+    - name: CLUSTER_NAME
+      description: Cluster name
+      default: "openshift-pipelines-install"
+
   steps:
   - name: build-binaries-and-dockerfiles
     env:
@@ -37,3 +42,50 @@ spec:
         build_binary create_dockerfiles \
         PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-pipeline-git.path) \
         OUTPUT_DIR=/workspace/output
+
+  - name: build-and-push-images
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    image: quay.io/buildah/stable:v1.11.0
+    workingDir: $(inputs.resources.plumbing-git.path)
+    volumeMounts:
+    - name: varlibcontainers
+      mountPath: /var/lib/containers
+    securityContext:
+      privileged: true
+    script: |
+      #!/usr/bin/env bash
+      set -exu
+
+      mkdir -p ${HOME}/.docker
+
+      curl -o ${HOME}/.docker/config.json \
+           -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+           $(inputs.params.UPLOADER_HOST)/private/$(inputs.params.CLUSTER_NAME)/config.json
+
+      REGISTRY_URL=$(python3 -c \
+           'import json, sys;a = json.loads(sys.stdin.read())["auths"];print(list(a)[0])' < ${HOME}/.docker/config.json)
+
+      # I wish we didn't need to do that as it slows down the build, we can
+      # probably build our own image but that's more machinery to setup.... (and
+      # that's not bcause i am lazy i promess)
+      sudo dnf -y install make
+
+      make -C $(inputs.resources.plumbing-git.path)/CI/tasks/build-tektoncd-pipeline \
+        container_build container_push \
+        OUTPUT_DIR=/workspace/output \
+        PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-pipeline-git.path) \
+        REGISTRY_URL=${REGISTRY_URL} \
+        REGISTRY_AUTH_FILE=${HOME}/.docker/config.json
+  volumes:
+  - name: varlibcontainers
+    emptyDir: {}
