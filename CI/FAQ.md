@@ -1,10 +1,9 @@
-* If you have an error like this :
-```
-securitycontextconstraints.security.openshift.io/privileged added to: ["system:serviceaccount:ci-openshift-pipelines:builder"]
------- Installing catalog tasks
-error: unable to recognize "STDIN": no matches for kind "Task" in version "tekton.dev/v1alpha1"
-```
-  It probabkly means you don't have tekton installed
+
+* How do I run this locally from my desktop?
+
+  Just look at the [local.sh.sample](local.sh.sample), collect all the
+  credentials needed from there, and run the `assemble.sh` script. You can then
+  use the `tkn` cli to track the update of the deployment.
 
 * How do I run a certain task without rerun the full pipline?
 
@@ -18,3 +17,11 @@ error: unable to recognize "STDIN": no matches for kind "Task" in version "tekto
    -i plumbing-git=plumbing-git -i tektoncd-pipeline-git=tektoncd-pipeline-git \
    --serviceaccount builder
   ```
+
+* If you have an error like this :
+```
+securitycontextconstraints.security.openshift.io/privileged added to: ["system:serviceaccount:ci-openshift-pipelines:builder"]
+------ Installing catalog tasks
+error: unable to recognize "STDIN": no matches for kind "Task" in version "tekton.dev/v1alpha1"
+```
+  It probabkly means you don't have tekton installed
