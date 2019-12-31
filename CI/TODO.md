@@ -3,7 +3,8 @@
 * Stream logs to the log server. (extend: https://github.com/chmouel/go-simple-uploader/ )
 * Convert base image to CentOS, we are using golang when it's not needed for the base image.
 * Move the yum install make from the buildah step to the new CentOS image (so have it buildah in there).
-* Commonalize the image names for the base golang versions across tasks.
+* Make sure containers are updated with latest packages (currently disabled for iterations).
+* Commonalise the image names for the base golang versions across tasks.
 * Build special case nop image too
 * Push to quay.io release.yaml + nightly images when succeed
 * Handle multiple openshift targets
