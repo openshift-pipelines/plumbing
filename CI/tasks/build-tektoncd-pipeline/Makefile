@@ -1,12 +1,13 @@
 # Things you should really configure if testing locally
-OUTPUT_DIR=/workspace/build-pipelines/
-PIPELINE_REPOSITORY=/workspace/tektoncd-pipeline-git
+OUTPUT_DIR := /workspace/build-pipelines/
+PIPELINE_REPOSITORY := /workspace/tektoncd-pipeline-git
 
 # If you are testing it on osx you can override it with BUILDAH=docker
 BUILDAH := buildah
 
 # TODO: remove this REGISTRY URL to something else
-REGISTRY_URL=default-route-openshift-image-registry.apps.samchmou2.devcluster.openshift.com
+REGISTRY_URL := default-route-openshift-image-registry.apps.samchmou2.devcluster.openshift.com
+REGISTRY_AUTH_FILE := ~/.docker/config.json
 
 # The addons images which means shipped in ./vendor files and not in ./cmd
 ADDN_IMAGES=./vendor/github.com/GoogleCloudPlatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher
@@ -60,7 +61,9 @@ container_push: ## Use buildah to push the containers to the $REGISTRY_URL
 	@set -e ;pushd $(OUTPUT_DIR);\
 	  for dfile in */;do \
 		cd $${dfile};\
-			$(BUILDAH) push --tls-verify=false $(REGISTRY_URL)/`basename $$dfile` docker://$(REGISTRY_URL)/`basename $$dfile` ;\
+			$(BUILDAH) push --auth-file=$(REGISTRY_AUTH_FILE) \
+			--tls-verify=false $(REGISTRY_URL)/`basename $$dfile` \
+		    docker://$(REGISTRY_URL)/`basename $$dfile` ;\
 		cd .. ;\
 	  done ;\
 	popd >/dev/null
