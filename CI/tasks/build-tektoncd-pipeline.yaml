@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1alpha1
 kind: Task
 metadata:
-  name: build-tektoncd-pipeline
+  name: build-tektoncd-pipeline-and-push
 spec:
   inputs:
     resources:
@@ -26,6 +26,8 @@ spec:
         secretKeyRef:
           name: openshift-install
           key: uploader-password
+    # TODO: change to a parameters since that's probably going to be changed
+    # done passably often and we want to commonalize it for the other projects.
     image: openshift/origin-release:golang-1.13
     workingDir: $(inputs.resources.plumbing-git.path)
     script: |

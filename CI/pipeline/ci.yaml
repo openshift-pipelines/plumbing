@@ -47,10 +47,10 @@ spec:
       - name: UPLOADER_HOST
         value: $(params.UPLOADER_HOST)
 
-  - name: build-binaries
+  - name: build-pipeline-and-push
     taskRef:
-      name: build-tektoncd-pipeline
-    runAfter: [build-bootstrap]
+      name: build-tektoncd-pipeline-and-push
+    runAfter: [install-openshift4-cluster]
     resources:
       inputs:
         - name: plumbing-git
