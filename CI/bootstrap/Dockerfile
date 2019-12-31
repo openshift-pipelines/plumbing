@@ -1,4 +1,6 @@
-FROM openshift/origin-release:golang-1.13
+# We can't use UBI here since we need other stuff that's would probably never
+# make into UBI
+FROM centos:latest
 
 ## TD: to renable
 # RUN yum -y update && yum -y install python-boto && yum -y clean all && rm -rf /var/cache/yum
