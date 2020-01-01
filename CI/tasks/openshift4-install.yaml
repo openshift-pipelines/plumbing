@@ -145,7 +145,7 @@ spec:
       # Launch install
       /usr/local/bin/openshift-install create cluster --log-level=debug
 
-  - name: openshift-install-save-artifacts
+  - name: openshift-install-setup-save-artifacts
     env:
     - name: UPLOADER_USERNAME
       valueFrom:
@@ -166,6 +166,7 @@ spec:
     workingDir: /workspace/install
     script: |
       #!/usr/bin/env bash
+      #
       # We should probably set it in an external script but that's much easier
       # to iterate here atm.
       set -e
@@ -175,7 +176,7 @@ spec:
       # Upload: by default it will upload the file as specified in "$1" to
       # "$CLUSTER_NAME/basename of $1" if you specify a $2 it will upload the $1
       # file to the destination specified in there.
-      # TODO: move to shell script so we can commonalize
+      # TODO: move to external shell script so we can commonalize
       function upload() {
         dest="$2"
         [[ -z ${dest} ]] && dest="$(inputs.params.CLUSTER_NAME)/$(basename ${1})"
@@ -206,11 +207,28 @@ spec:
       # kubeconfig.
       cp auth/kubeconfig /tmp/registry-kubeconfig
       export KUBECONFIG=/tmp/registry-kubeconfig
-      oc new-project ci-openshift-pipelines
-      oc policy add-role-to-user system:image-puller system:serviceaccount:tekton-pipelines:default -n ci-openshift-pipelines
-      oc login -u kubeadmin -p "$(cat auth/kubeadmin-password)" --insecure-skip-tls-verify
+      oc new-project ci-openshift-pipelines >/dev/null && echo "ci-openshift-pipelines project has been created"
+
+      # Give public image access to the ci-openshift-pipelines images so every
+      # authenticated users can use it.
+      oc adm policy add-role-to-group system:image-puller system:authenticated -n ci-openshift-pipelines
+
+      # Sometime the url can let us down, so let's add a counter
+      i=1
+      while [[ $i -le 10 ]];do
+        oc login -u kubeadmin -p "$(cat auth/kubeadmin-password)" --insecure-skip-tls-verify && break || true
+        sleep 5
+        (( i++ ))
+      done
+
+      # Expose imageregistry to external, so we can push in there (we use the
+      # internal registry url to access images tho)
       oc patch configs.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge
-      sleep 2
+
+      # Wait a bit just to make sure things are here
+      sleep 5
+
+      # Login into the regitry externally and get the access token in auth/registry.config.json
       oc registry --insecure=true login --to=auth/registry.config.json \
       --registry="$(oc get route default-route -n openshift-image-registry --template='{{ .spec.host }}')"
 
@@ -224,6 +242,7 @@ spec:
         gpg_args="$gpg_args -r$key"
       done
 
+      # Encrypt all fles and public upload them
       for encryptfile in auth/*;do
         [[ -f ${encryptfile} ]] || continue
         gpg --batch -e --trust-model=always ${gpg_args}  ${encryptfile}
@@ -237,5 +256,7 @@ spec:
       #
       # $URL/private/${CLUSTER_NAME}/kubeconfig -> the kubeconfig to access the
       # say cluster registry
+      #
+      # they are in a private repo
       upload auth/registry.config.json private/$(inputs.params.CLUSTER_NAME)/config.json
       upload auth/kubeconfig private/$(inputs.params.CLUSTER_NAME)/kubeconfig

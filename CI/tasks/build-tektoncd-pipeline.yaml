@@ -118,7 +118,7 @@ spec:
       bash CI/tasks/build-tektoncd-pipeline/resolve-yamls.sh \
         $(inputs.resources.tektoncd-pipeline-git.path) \
         /workspace/output/release.yaml \
-        image-registry.openshift-image-registry.svc:5000/tekton-pipelines
+        image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines
 
       upload /workspace/output/release.yaml
 

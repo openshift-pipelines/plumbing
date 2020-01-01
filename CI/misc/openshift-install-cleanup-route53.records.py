@@ -30,7 +30,7 @@ import sys
 
 import boto
 
-# Shoudl be statci
+# Shoudl be static
 DEVCLUSTER_DNS_ZONE = 'devcluster.openshift.com.'
 
 
