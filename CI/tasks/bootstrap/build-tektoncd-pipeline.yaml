@@ -115,7 +115,9 @@ spec:
           $(inputs.params.UPLOADER_HOST)/upload
       }
 
-      bash CI/tasks/bootstrap/build-tektoncd-pipeline/resolve-yamls.sh \
+      source CI/tasks/bootstrap/build-tektoncd-pipeline/resolve-yamls.sh
+
+      generate_pipeline_resources \
         $(inputs.resources.tektoncd-pipeline-git.path) \
         /workspace/output/release.yaml \
         image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines
