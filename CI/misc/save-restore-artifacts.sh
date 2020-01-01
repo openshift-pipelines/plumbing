@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Simple script so you can backup/restore your simple uploader between nightly reinstall
 # We really need to keep the metadata.json to do an uninstall before install,
 # since os4 install reaper is buggy and donest delete the DNS name
