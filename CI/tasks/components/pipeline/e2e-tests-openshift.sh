@@ -72,7 +72,7 @@ function run_yaml_e2e_tests() {
 function validate_run() {
   local tests_finished=0
   for i in {1..120}; do
-    local finished="$(kubectl get $1.tekton.dev --output=jsonpath='{.items[*].status.conditions[*].status}')"
+    local finished="$(oc get $1.tekton.dev --output=jsonpath='{.items[*].status.conditions[*].status}')"
     if [[ ! "$finished" == *"Unknown"* ]]; then
       tests_finished=1
       break
@@ -85,7 +85,7 @@ function validate_run() {
 
 function check_results() {
   local failed=0
-  results="$(kubectl get $1.tekton.dev --output=jsonpath='{range .items[*]}{.metadata.name}={.status.conditions[*].type}{.status.conditions[*].status}{" "}{end}')"
+  results="$(oc get $1.tekton.dev --output=jsonpath='{range .items[*]}{.metadata.name}={.status.conditions[*].type}{.status.conditions[*].status}{" "}{end}')"
   for result in ${results}; do
     reltestname=${result/=*Succeeded*/}
     skipit=
@@ -99,10 +99,10 @@ function check_results() {
     if [[ "${result,,}" != *"=succeededtrue" ]]; then
       echo ">>> ERROR: test ${result} but should be succeededtrue"
       echo ">>> $1.tekton.dev/${reltestname} YAML DUMP"
-      kubectl get $1.tekton.dev ${reltestname} -o yaml
+      oc get $1.tekton.dev ${reltestname} -o yaml
       echo ">>> $1.tekton.dev/${reltestname} LOG OUTPUT"
-      kubectl logs --all-containers \
-              $(kubectl get taskrun.tekton.dev ${reltestname} -o yaml|sed -n '/podName: / { s/.*podName: //;p;}')
+      oc logs --all-containers \
+              $(oc get taskrun.tekton.dev ${reltestname} -o yaml|sed -n '/podName: / { s/.*podName: //;p;}')
       failed=1
     fi
   done
