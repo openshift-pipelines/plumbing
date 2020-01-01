@@ -180,10 +180,10 @@ spec:
       function upload() {
         dest="$2"
         [[ -z ${dest} ]] && dest="$(inputs.params.CLUSTER_NAME)/$(basename ${1})"
-        curl -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+        curl -f -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
           -F path=${dest} \
           -F file=@${1} \
-          $(inputs.params.UPLOADER_HOST)/upload/
+          $(inputs.params.UPLOADER_HOST)/upload
       }
 
       [[ -n $(inputs.params.UPLOADER_HOST) && \
