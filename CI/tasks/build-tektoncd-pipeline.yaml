@@ -19,7 +19,7 @@ spec:
       default: "openshift-pipelines-install"
 
   steps:
-  - name: build-binaries-and-dockerfiles
+  - name: binaries-build-dockerfiles
     env:
     - name: UPLOADER_USERNAME
       valueFrom:
@@ -43,7 +43,7 @@ spec:
         PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-pipeline-git.path) \
         OUTPUT_DIR=/workspace/output
 
-  - name: build-and-push-images
+  - name: container-buildpush
     env:
     - name: UPLOADER_USERNAME
       valueFrom:
@@ -121,6 +121,31 @@ spec:
         image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines
 
       upload /workspace/output/release.yaml
+
+  - name: install-release-yaml
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    image: quay.io/openshift/origin-cli:latest
+    workingDir: $(inputs.resources.plumbing-git.path)
+    script: |
+      #!/usr/bin/env bash
+      set -eu
+      mkdir -p ${HOME}/.kube
+      curl -o ${HOME}/.kube/config \
+           -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+           $(inputs.params.UPLOADER_HOST)/private/$(inputs.params.CLUSTER_NAME)/kubeconfig
+      echo "Installing OpenShift Pipelines"
+      oc delete -f /workspace/output/release.yaml 2>/dev/null || true # In case if we are doing a shortcut install
+      oc create -f /workspace/output/release.yaml
 
   volumes:
   - name: varlibcontainers
