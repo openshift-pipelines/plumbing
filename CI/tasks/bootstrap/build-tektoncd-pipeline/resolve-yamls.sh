@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eu
+set -e
 
 TMP=$(mktemp /tmp/.mm.XXXXXX)
 clean() { rm -f ${TMP}; }
@@ -77,5 +77,3 @@ function generate_pipeline_resources() {
         cat ${yaml} >> $output_file
     done
 }
-
-generate_pipeline_resources $@
