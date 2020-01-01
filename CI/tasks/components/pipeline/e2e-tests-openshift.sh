@@ -110,7 +110,7 @@ function check_results() {
   return ${failed}
 }
 
-create_test_namespace
+create_test_namespaces
 
 failed=0
 
