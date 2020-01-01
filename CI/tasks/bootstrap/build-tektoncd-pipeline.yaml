@@ -138,7 +138,7 @@ spec:
     workingDir: $(inputs.resources.plumbing-git.path)
     script: |
       #!/usr/bin/env bash
-      set -eu
+      set -eux
       mkdir -p ${HOME}/.kube
       curl -o ${HOME}/.kube/config \
            -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
