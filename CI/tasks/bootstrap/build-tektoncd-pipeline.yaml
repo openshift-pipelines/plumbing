@@ -38,7 +38,7 @@ spec:
     script: |
       #!/usr/bin/env bash
       set -ex
-      make -C $(inputs.resources.plumbing-git.path)/CI/tasks/build-tektoncd-pipeline \
+      make -C $(inputs.resources.plumbing-git.path)/CI/tasks/bootstrap/build-tektoncd-pipeline \
         build_binary create_dockerfiles \
         PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-pipeline-git.path) \
         OUTPUT_DIR=/workspace/output
@@ -80,7 +80,7 @@ spec:
       # that's not bcause i am lazy i promess)
       sudo dnf -y install make
 
-      make -C $(inputs.resources.plumbing-git.path)/CI/tasks/build-tektoncd-pipeline \
+      make -C $(inputs.resources.plumbing-git.path)/CI/tasks/bootstrap/build-tektoncd-pipeline \
         container_build container_push \
         OUTPUT_DIR=/workspace/output \
         PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-pipeline-git.path) \
@@ -115,7 +115,7 @@ spec:
           $(inputs.params.UPLOADER_HOST)/upload/
       }
 
-      bash CI/tasks/build-tektoncd-pipeline/resolve-yamls.sh \
+      bash CI/tasks/bootstrap/build-tektoncd-pipeline/resolve-yamls.sh \
         $(inputs.resources.tektoncd-pipeline-git.path) \
         /workspace/output/release.yaml \
         image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines

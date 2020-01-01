@@ -15,8 +15,8 @@
   Just use the `tkn` CLI with the right argument, for example I use this for rerunning the `build-tekton-pipeline` task :
 
   ```
-  k delete -f $(git rev-parse --show-toplevel)/CI/tasks/build-tektoncd-pipeline.yaml && \
-  k create -f $(git rev-parse --show-toplevel)/CI/tasks/build-tektoncd-pipeline.yaml && \
+  k delete -f $(git rev-parse --show-toplevel)/CI/tasks/bootstrap/build-tektoncd-pipeline.yaml && \
+  k create -f $(git rev-parse --show-toplevel)/CI/tasks/bootstrap/build-tektoncd-pipeline.yaml && \
   tkn task start build-tektoncd-pipeline-and-push --showlog \
    --param UPLOADER_HOST=http://$(oc get route -n osinstall uploader -o jsonpath={.spec.host}) \
    -i plumbing-git=plumbing-git -i tektoncd-pipeline-git=tektoncd-pipeline-git \
