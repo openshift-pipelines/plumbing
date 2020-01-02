@@ -11,3 +11,4 @@
 * Handle multiple openshift targets
 * Rewrite resolv-yamls.sh, it's still as bad as before and didn't have the
   courage to get my head around it. (just made it work for the new CI)
+* Use a S3 bucket when we do private stuff instead go-simple-uploader
