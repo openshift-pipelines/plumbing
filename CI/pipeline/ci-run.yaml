@@ -12,6 +12,8 @@ spec:
       value: http://uploader-osinstall.apps.samchmou2.devcluster.openshift.com
     - name: IMAGE_NAME
       value: quay.io/openshift-pipeline/ci:latest
+    - name: CLUSTER_NAME
+      value: openshift-pipelines-install
   resources:
   - name: plumbing-git
     resourceRef:
