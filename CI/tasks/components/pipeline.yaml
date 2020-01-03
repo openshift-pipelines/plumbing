@@ -1,0 +1,46 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: pipeline-test
+spec:
+  inputs:
+    resources:
+      - name: plumbing-git
+        type: git
+      - name: tektoncd-pipeline-git
+        type: git
+    params:
+    - name: IMAGE_NAME
+      description: The bootstrap image with all the tools needed
+    - name: UPLOADER_HOST
+      description: GO Simple Uploader hostname
+    - name: CLUSTER_NAME
+      description: Cluster name
+  steps:
+  - name: e2e-tests
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    image: $(inputs.params.IMAGE_NAME)
+    workingDir: $(inputs.resources.plumbing-git.path)
+    script: |
+      #!/usr/bin/env bash
+      set -eux
+      mkdir -p ${HOME}/.kube
+      curl -o ${HOME}/.kube/config \
+           -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+           $(inputs.params.UPLOADER_HOST)/private/$(inputs.params.CLUSTER_NAME)/kubeconfig
+
+      CI/tasks/components/pipeline/e2e-tests-openshift.sh \
+         image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines \
+         /workspace/pipelines-test-output \
+         $(inputs.resources.tektoncd-pipeline-git.path)
