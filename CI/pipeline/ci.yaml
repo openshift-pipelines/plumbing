@@ -7,6 +7,7 @@ metadata:
 spec:
   params:
     - name: UPLOADER_HOST
+    - name: IMAGE_NAME
 
   resources:
     - name: plumbing-git
@@ -17,6 +18,7 @@ spec:
       type: image
 
   tasks:
+
   - name: build-bootstrap
     taskRef:
       name: buildah
@@ -30,8 +32,6 @@ spec:
     params:
       - name: DOCKERFILE
         value: CI/bootstrap/Dockerfile
-      - name: TLSVERIFY
-        value: "false"
 
   - name: install-openshift4-cluster
     taskRef:
@@ -43,7 +43,7 @@ spec:
           resource: plumbing-git
     params:
       - name: IMAGE_NAME
-        value: image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines/openshift-pipeline-bootstrap
+        value: $(params.IMAGE_NAME)
       - name: UPLOADER_HOST
         value: $(params.UPLOADER_HOST)
 

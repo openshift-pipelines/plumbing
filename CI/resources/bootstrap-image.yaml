@@ -7,4 +7,4 @@ spec:
   type: image
   params:
     - name: url
-      value: image-registry.openshift-image-registry.svc:5000/%TARGET_NAMESPACE%/openshift-pipeline-bootstrap
+      value: quay.io/openshift-pipeline/ci

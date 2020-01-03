@@ -34,7 +34,7 @@ spec:
 
   steps:
   - name: openshift-install-config
-    image: $(inputs.params.IMAGE_NAME)
+    image: registry.access.redhat.com/ubi8/ubi-minimal:latest
     workingDir: /workspace/install
     env:
     - name: REGISTRY_TOKEN

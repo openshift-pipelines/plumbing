@@ -10,6 +10,8 @@ spec:
   params:
     - name: UPLOADER_HOST
       value: http://uploader-osinstall.apps.samchmou2.devcluster.openshift.com
+    - name: IMAGE_NAME
+      value: quay.io/openshift-pipeline/ci:latest
   resources:
   - name: plumbing-git
     resourceRef:

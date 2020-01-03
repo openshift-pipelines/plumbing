@@ -7,7 +7,8 @@
 #### 		uploader-username - username for uploader
 #### 		uploader-password - password for uploader
 #### ~/.ssh/id_ed25519.pub : Your public SSH key
-#### ~/.docker/openshift-install.json : Your registry config credentials (from https://install.openshift.com)
+#### ~/.docker/quay-registry-config.json : Your quay registry docker config that has the ability to upload to quay.io/openshift-pipeline/
+#### ~/.docker/openshift-install-config.json : Your registry config credentials (from https://install.openshift.com)
 #### ~/.gnupg/openshift-pipeline-team-pubring.gpg : The public keyring of the users you want to give encrypt files to
 
 echo "------ Setting openshift-install secret"
@@ -18,5 +19,16 @@ oc create secret generic openshift-install \
    --from-literal="$(grep uploader-username ~/.uploader.cfg)" \
    --from-literal="$(grep uploader-password ~/.uploader.cfg)" \
    --from-file=public-ssh-key="${HOME}/.ssh/id_ed25519.pub" \
-   --from-file=registry-token="${HOME}/.docker/openshift-install.json" \
+   --from-file=registry-token="${HOME}/.docker/openshift-install-config.json" \
+   --from-literal=quay-registry-token="${HOME}/.docker/quay-registry-config.json" \
    --from-file=upload-pubring.gpg="${HOME}/.gnupg/openshift-pipeline-team-pubring.gpg" \
+
+echo "------ Configuring SA builder with your quay registry config "
+oc delete secret quay-reg-cred 2>/dev/null >/dev/null || true
+kubectl create secret generic quay-reg-cred \
+    --from-file=.dockerconfigjson="${HOME}/.docker/static/config.json" \
+    --type=kubernetes.io/dockerconfigjson
+oc get sa builder -o yaml | grep -q -- '- name: quay-reg-cred' || {
+    oc get sa builder -o json | \
+        python -c "import json, sys;r = json.loads(sys.stdin.read());r['secrets'].append({'name': 'quay-reg-cred'});print(json.dumps(r))"|oc apply -f-
+}
