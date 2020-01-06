@@ -7,6 +7,6 @@ spec:
   type: git
   params:
   - name: revision
-    value: master
+    value: dont-assume-dollar-zero-is-topdir
   - name: url
-    value: https://github.com/tektoncd/pipeline
+    value: https://github.com/chmouel/tektoncd-pipeline
