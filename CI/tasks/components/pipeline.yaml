@@ -40,7 +40,13 @@ spec:
            -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
            $(inputs.params.UPLOADER_HOST)/private/CI/$(inputs.params.CLUSTER_NAME)/kubeconfig
 
+      # Workaround for cloud event so it can send its even to the right place
+      TIMESTAMP=$(date '+%Y%m%d-%Hh%M')
+      NS_YAML=tekton-pipeline-tests-yaml-${TIMESTAMP}
+      sed -i  "s/sink.default/sink.${NS_YAML}/"  $(inputs.resources.tektoncd-pipeline-git.path)/examples/taskruns/cloud-event.yaml
+
       CI/tasks/components/pipeline/e2e-tests-openshift.sh \
          image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines \
          /workspace/pipelines-test-output \
-         $(inputs.resources.tektoncd-pipeline-git.path)
+         $(inputs.resources.tektoncd-pipeline-git.path) \
+         ${TIMESTAMP}

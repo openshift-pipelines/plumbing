@@ -5,6 +5,7 @@ source $(git rev-parse --show-toplevel)/CI/tasks/bootstrap/build-tektoncd-pipeli
 readonly OPENSHIFT_REGISTRY=${1}
 readonly REPO_OUTPUT=${2}
 readonly PIPELINE_REPOSITORY=${3}
+TIMESTAMP=${4:-$(date "+%Y%m%d-%Hh%M")}
 
 [[ -z ${OPENSHIFT_REGISTRY} || -z ${REPO_OUTPUT}  || -z ${PIPELINE_REPOSITORY} ]] && {
     echo "args in order: OPENSHIFT_REGISTRY REPO_OUTPUT PIPELINE_REPOSITORY"
@@ -13,7 +14,6 @@ readonly PIPELINE_REPOSITORY=${3}
 
 [[ -d ${REPO_OUTPUT} ]] || mkdir -p ${REPO_OUTPUT}
 
-readonly TIMESTAMP="$(date "+%Y%m%d-%Hh%m")"
 readonly TEST_NAMESPACE=tekton-pipeline-tests-${TIMESTAMP}
 readonly TEST_YAML_NAMESPACE=tekton-pipeline-tests-yaml-${TIMESTAMP}
 
