@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Main script, we could probably convert all of it to a nice kustomize template,
-# but i let this for some future play time.
+# Main install script. This probably would only install script in the future,
+# (or when doing a push to the repo this would get run to reinstall a la gitops)
+
 set -eu
 
 # Target namespace on the cluster
@@ -19,23 +20,6 @@ install_catalog_tasks() {
     done
 }
 
-install_local_stuff() {
-    echo "------ Installing local templates to run bootstrap"
-    for resource in tasks/bootstrap/*.yaml resources/*.yaml;do
-        # We may use something fancier than sed (i:e kustomize) in the future
-        sed -e "s/%TARGET_NAMESPACE%/${TARGET_NAMESPACE}/g" ${resource} | \
-            kubectl apply -f- -n ${TARGET_NAMESPACE}
-    done
-}
-
-# Util to delete/create (ie: recreate) easily resource
-krecreate () {
-	for file in $@;do
-		kubectl delete -f $file 2>/dev/null || true
-		kubectl create -f $file
-	done
-}
-
 install() {
 	# We do this so we can have some custom configuration in there, i.e: installing secret
 	[[ -e ./local.sh ]] && source "./local.sh"
@@ -51,12 +35,16 @@ install() {
 	kubectl create ns ${TARGET_NAMESPACE} 2>/dev/null || true
 
 	install_catalog_tasks
-	install_local_stuff
+
+	echo "------ Installing local templates to run bootstrap"
+    kubectl apply -f resources -f tasks/bootstrap/ -f tasks/components/
+
 }
 
 
 run() {
-	krecreate ./pipeline/ci.yaml ./pipeline/ci-run.yaml
+	kubectl delete -f ./pipeline/ci.yaml -f ./pipeline/ci-run.yaml 2>/dev/null || true
+	kubectl create -f ./pipeline/ci.yaml -f ./pipeline/ci-run.yaml
 }
 
 main() {
