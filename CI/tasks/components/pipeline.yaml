@@ -18,7 +18,7 @@ spec:
     - name: CLUSTER_NAME
       description: Cluster name
   steps:
-  - name: e2e-tests
+  - name: go-tests
     env:
     - name: UPLOADER_USERNAME
       valueFrom:
@@ -31,22 +31,105 @@ spec:
           name: openshift-install
           key: uploader-password
     image: $(inputs.params.IMAGE_NAME)
-    workingDir: $(inputs.resources.plumbing-git.path)
+    workingDir: $(inputs.resources.tektoncd-pipeline-git.path)
     script: |
       #!/usr/bin/env bash
-      set -eux
+      set -eu
+      TIMESTAMP=$(date '+%Y%m%d-%Hh%M')
+      NS=tekton-pipeline-tests-${TIMESTAMP}
+      failed=0
+      export BUILD_NUMBER=1
+
       mkdir -p ${HOME}/.kube
       curl -o ${HOME}/.kube/config \
            -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
            $(inputs.params.UPLOADER_HOST)/private/CI/$(inputs.params.CLUSTER_NAME)/kubeconfig
+      export KUBECONFIG=${HOME}/.kube/config
 
-      # Workaround for cloud event so it can send its even to the right place
+      oc new-project ${NS}
+
+      source test/e2e-common.sh
+
+      # Run the integration tests
+      header "Running Go e2e tests"
+
+      go test -v -failfast -count=1 -tags=e2e \
+        -ldflags '-X github.com/tektoncd/pipeline/test.missingKoFatal=false -X github.com/tektoncd/pipeline/test.skipRootUserTests=true' \
+        ./test -timeout=20m --kubeconfig=${KUBECONFIG}  || failed=1
+
+      (( failed )) && fail_test
+      success
+  - name: yaml-tests
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    image: $(inputs.params.IMAGE_NAME)
+    workingDir: $(inputs.resources.tektoncd-pipeline-git.path)
+    script: |
+      #!/usr/bin/env bash
+      set -eux
+      # TODO: Kaniko could be enabled if we run it with a priv sa to it.
+      # TODO: sidecar-ready is failing due of readinessprobe not doign its work, let's investigate this later
+      declare -ar SKIP_YAML_TEST=(sidecar-ready git-volume build-push-kaniko dind-sidecar pull-private-image build-gcs-targz build-gcs-zip gcs-resource)
+
       TIMESTAMP=$(date '+%Y%m%d-%Hh%M')
-      NS_YAML=tekton-pipeline-tests-yaml-${TIMESTAMP}
-      sed -i  "s/sink.default/sink.${NS_YAML}/"  $(inputs.resources.tektoncd-pipeline-git.path)/examples/taskruns/cloud-event.yaml
+      NS=tekton-pipeline-tests-yaml-${TIMESTAMP}
+      failed=0
+      export BUILD_NUMBER=1
 
-      CI/tasks/components/pipeline/e2e-tests-openshift.sh \
-         image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines \
-         /workspace/pipelines-test-output \
-         $(inputs.resources.tektoncd-pipeline-git.path) \
-         ${TIMESTAMP}
+      mkdir -p ${HOME}/.kube
+      curl -o ${HOME}/.kube/config \
+           -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+           $(inputs.params.UPLOADER_HOST)/private/CI/$(inputs.params.CLUSTER_NAME)/kubeconfig
+      oc new-project ${NS}
+
+      # We do this so cloudevent would know where to go for our namespace...
+      sed -i  "s/sink.default/sink.${NS}/"  $(inputs.resources.tektoncd-pipeline-git.path)/examples/taskruns/cloud-event.yaml
+
+      # We should find a way to exclude install_pipeline_crd and be able to run
+      # e2e-tests.sh directly
+      source test/e2e-common.sh
+
+      function create_resources() {
+        local resource=$1
+        echo ">> Creating resources ${resource}"
+
+        # Applying the resources, either *taskruns or * *pipelineruns
+        for file in $(find ${REPO_ROOT_DIR}/examples/${resource}s/ -name *.yaml -not -path "${REPO_ROOT_DIR}/examples/${resource}s/no-ci/*" | sort); do
+            skipit=False
+            reltestname=$(basename $file|sed 's/.yaml//')
+            for skip in ${SKIP_YAML_TEST[@]};do
+                [[ ${reltestname} == ${skip} ]] && skipit=True
+            done
+            [[ ${skipit} == True ]] && {
+                echo ">>> INFO: skipping yaml test ${reltestname}"
+                continue
+            }
+            kubectl delete -n ${NS} -f ${file} 2>/dev/null || true
+            kubectl create -n ${NS} -f ${file} || return 1
+        done
+      }
+
+
+      failed=0
+      for test in taskrun pipelinerun; do
+        header "Running YAML e2e tests for ${test}s"
+        if ! run_yaml_tests ${test}; then
+          echo ">>> ERROR: one or more YAML tests failed"
+          output_yaml_test_results ${test}
+          output_pods_logs ${test}
+          failed=1
+        fi
+      done
+
+      (( failed )) && fail_test
+
+      success

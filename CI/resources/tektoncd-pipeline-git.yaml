@@ -7,6 +7,6 @@ spec:
   type: git
   params:
   - name: revision
-    value: dont-assume-dollar-zero-is-topdir
+    value: chmouel-TEST
   - name: url
     value: https://github.com/chmouel/tektoncd-pipeline
