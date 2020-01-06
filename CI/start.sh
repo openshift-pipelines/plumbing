@@ -31,7 +31,7 @@ install_local_stuff() {
 # Util to delete/create (ie: recreate) easily resource
 krecreate () {
 	for file in $@;do
-		kubectl delete -f $file || true
+		kubectl delete -f $file 2>/dev/null || true
 		kubectl create -f $file
 	done
 }
