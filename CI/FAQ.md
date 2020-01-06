@@ -18,7 +18,7 @@
   k delete -f $(git rev-parse --show-toplevel)/CI/tasks/bootstrap/build-tektoncd-pipeline.yaml && \
   k create -f $(git rev-parse --show-toplevel)/CI/tasks/bootstrap/build-tektoncd-pipeline.yaml && \
   tkn task start build-tektoncd-pipeline-and-push --showlog \
-   --param UPLOADER_HOST=http://$(oc get route -n osinstall uploader -o jsonpath={.spec.host}) \
+   --param UPLOADER_HOST=https://uploader.host \
    -i plumbing-git=plumbing-git -i tektoncd-pipeline-git=tektoncd-pipeline-git \
    --serviceaccount builder
   ```

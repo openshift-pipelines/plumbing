@@ -38,7 +38,7 @@ spec:
       mkdir -p ${HOME}/.kube
       curl -o ${HOME}/.kube/config \
            -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
-           $(inputs.params.UPLOADER_HOST)/private/$(inputs.params.CLUSTER_NAME)/kubeconfig
+           $(inputs.params.UPLOADER_HOST)/private/CI/$(inputs.params.CLUSTER_NAME)/kubeconfig
 
       CI/tasks/components/pipeline/e2e-tests-openshift.sh \
          image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines \

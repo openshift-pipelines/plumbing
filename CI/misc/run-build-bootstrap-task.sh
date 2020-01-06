@@ -9,5 +9,5 @@ for i in delete create;do
 done
 
 tkn task start build-tektoncd-pipeline-and-push --showlog \
-	--param UPLOADER_HOST=http://$(oc get route -n osinstall uploader -o jsonpath={.spec.host}) \
+    --param UPLOADER_HOST=$(grep host ~/.uploader.cfg|sed 's/host=//') \
 	-i plumbing-git=plumbing-git -i tektoncd-pipeline-git=tektoncd-pipeline-git --serviceaccount builder

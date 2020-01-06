@@ -121,7 +121,7 @@ spec:
       # information needed for the destroy clsuter command of the installer, if
       # it's no there (we have been reaped already). Then let's just give up and
       # hope for the best.
-      curl -s -O $(inputs.params.UPLOADER_HOST)/$(inputs.params.CLUSTER_NAME)/metadata.json || exit
+      curl -s -O $(inputs.params.UPLOADER_HOST)/CI/$(inputs.params.CLUSTER_NAME)/metadata.json || exit
       echo "Trying to delete previous cluster (if it wasn't reaped already)"
       /usr/local/bin/openshift-install destroy cluster  --log-level=debug || true
 
@@ -179,7 +179,7 @@ spec:
       # TODO: move to external shell script so we can commonalize
       function upload() {
         dest="$2"
-        [[ -z ${dest} ]] && dest="$(inputs.params.CLUSTER_NAME)/$(basename ${1})"
+        [[ -z ${dest} ]] && dest="CI/$(inputs.params.CLUSTER_NAME)/$(basename ${1})"
         curl -f -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
           -F path=${dest} \
           -F file=@${1} \
@@ -251,12 +251,12 @@ spec:
 
       # We are going to have two files than we are going to use for next tasks :
       #
-      # $URL/private/${CLUSTER_NAME}/config.json -> config file to log to the
+      # $URL/private/CI/${CLUSTER_NAME}/config.json -> config file to log to the
       # target cluster's registry
       #
-      # $URL/private/${CLUSTER_NAME}/kubeconfig -> the kubeconfig to access the
+      # $URL/private/CI/${CLUSTER_NAME}/kubeconfig -> the kubeconfig to access the
       # say cluster registry
       #
       # they are in a private repo
-      upload auth/registry.config.json private/$(inputs.params.CLUSTER_NAME)/config.json
-      upload auth/kubeconfig private/$(inputs.params.CLUSTER_NAME)/kubeconfig
+      upload auth/registry.config.json private/CI/$(inputs.params.CLUSTER_NAME)/config.json
+      upload auth/kubeconfig private/CI/$(inputs.params.CLUSTER_NAME)/kubeconfig

@@ -70,7 +70,7 @@ spec:
 
       curl -o ${HOME}/.docker/config.json \
            -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
-           $(inputs.params.UPLOADER_HOST)/private/$(inputs.params.CLUSTER_NAME)/config.json
+           $(inputs.params.UPLOADER_HOST)/private/CI/$(inputs.params.CLUSTER_NAME)/config.json
 
       REGISTRY_URL=$(python3 -c \
            'import json, sys;a = json.loads(sys.stdin.read())["auths"];print(list(a)[0])' < ${HOME}/.docker/config.json)
@@ -108,7 +108,7 @@ spec:
       #TODO: Commonalize in shell script
       function upload() {
         dest="$2"
-        [[ -z ${dest} ]] && dest="$(inputs.params.CLUSTER_NAME)/$(basename ${1})"
+        [[ -z ${dest} ]] && dest="CI/$(inputs.params.CLUSTER_NAME)/$(basename ${1})"
         curl -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
           -F path=${dest} \
           -F file=@${1} \
@@ -144,7 +144,7 @@ spec:
       mkdir -p ${HOME}/.kube
       curl -o ${HOME}/.kube/config \
            -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
-           $(inputs.params.UPLOADER_HOST)/private/$(inputs.params.CLUSTER_NAME)/kubeconfig
+           $(inputs.params.UPLOADER_HOST)/private/CI/$(inputs.params.CLUSTER_NAME)/kubeconfig
       echo "Installing OpenShift Pipelines"
       oc delete -f /workspace/output/release.yaml 2>/dev/null || true # In case if we are doing a shortcut install
       oc create -f /workspace/output/release.yaml

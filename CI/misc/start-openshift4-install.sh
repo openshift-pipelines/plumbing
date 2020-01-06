@@ -19,7 +19,7 @@ REKICKALL=${1-""}
 krec tasks/bootstrap/openshift4-install.yaml
 
 tkn task start openshift4-install --showlog \
-    --param UPLOADER_HOST=http://$(oc get route -n osinstall uploader -o jsonpath={.spec.host}) \
+    --param UPLOADER_HOST=$(grep host ~/.uploader.cfg|sed 's/host=//') \
     --param CLUSTER_NAME=openshift-pipelines-install \
     --param IMAGE_NAME="quay.io/openshift-pipeline/ci:latest" \
     -i plumbing-git=plumbing-git
