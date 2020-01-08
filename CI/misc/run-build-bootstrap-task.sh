@@ -4,9 +4,8 @@ set -eu
 
 kubectl delete taskrun --all;
 
-for i in delete create;do
-    kubectl ${i} -f $(git rev-parse --show-toplevel)/CI/tasks/bootstrap/build-tektoncd-pipeline.yaml
-done
+kubectl delete -f $(git rev-parse --show-toplevel)/CI/tasks/bootstrap/build-tektoncd-pipeline.yaml 2>/dev/null || true
+kubectl create -f $(git rev-parse --show-toplevel)/CI/tasks/bootstrap/build-tektoncd-pipeline.yaml
 
 tkn task start build-tektoncd-pipeline-and-push --showlog \
     --param UPLOADER_HOST=$(grep host ~/.uploader.cfg|sed 's/host=//') \
