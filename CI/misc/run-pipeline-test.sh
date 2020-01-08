@@ -20,5 +20,5 @@ REKICKALL=${1-""}
 tkn task start pipeline-test --showlog \
     --param UPLOADER_HOST=$(grep host ~/.uploader.cfg|sed 's/host=//') \
     --param CLUSTER_NAME=openshift-pipelines-install \
-    --param IMAGE_NAME="quay.io/openshift-pipeline/ci:latest" \
+    --param IMAGE_NAME="quay.io/openshift-pipeline/ci:bootstrap" \
     -i plumbing-git=plumbing-git -i tektoncd-pipeline-git=tektoncd-pipeline-git

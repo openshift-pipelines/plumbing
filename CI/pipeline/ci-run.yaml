@@ -11,7 +11,7 @@ spec:
     - name: UPLOADER_HOST
       value: https://osinstall.chmouel.com
     - name: IMAGE_NAME
-      value: quay.io/openshift-pipeline/ci:latest
+      value: quay.io/openshift-pipeline/ci:bootstrap
     - name: CLUSTER_NAME
       value: openshift-pipelines-install
   resources:

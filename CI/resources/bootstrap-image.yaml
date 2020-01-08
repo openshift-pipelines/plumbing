@@ -7,4 +7,4 @@ spec:
   type: image
   params:
     - name: url
-      value: quay.io/openshift-pipeline/ci
+      value: quay.io/openshift-pipeline/ci:bootstrap
