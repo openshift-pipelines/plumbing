@@ -35,7 +35,7 @@ spec:
     script: |
       #!/usr/bin/env bash
       set -eu
-      TIMESTAMP=$(date '+%Y%m%d-%Hh%M')
+      TIMESTAMP=$(date '+%Y%m%d-%Hh%M-%S')
       NS=tekton-pipeline-tests-${TIMESTAMP}
       failed=0
       export BUILD_NUMBER=1
@@ -80,7 +80,7 @@ spec:
       # TODO: sidecar-ready is failing due of readinessprobe not doign its work, let's investigate this later
       declare -ar SKIP_YAML_TEST=(sidecar-ready git-volume build-push-kaniko dind-sidecar pull-private-image build-gcs-targz build-gcs-zip gcs-resource)
 
-      TIMESTAMP=$(date '+%Y%m%d-%Hh%M')
+      TIMESTAMP=$(date '+%Y%m%d-%Hh%M-%S')
       NS=tekton-pipeline-tests-yaml-${TIMESTAMP}
       failed=0
       export BUILD_NUMBER=1
