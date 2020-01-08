@@ -21,11 +21,11 @@ install_catalog_tasks() {
 }
 
 install() {
-	# We do this so we can have some custom configuration in there, i.e: installing secret
-	[[ -e ./local.sh ]] && source "./local.sh"
-
 	oc project ${TARGET_NAMESPACE} 2>/dev/null >/dev/null ||
 		oc new-project ${TARGET_NAMESPACE}
+
+	# We do this so we can have some custom configuration in there, i.e: installing secret
+	[[ -e ./local.sh ]] && source "./local.sh"
 
 	# We use the builder image for our building task until buildah can build without
 	# privileged
