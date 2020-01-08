@@ -10,4 +10,6 @@ done
 
 tkn task start build-tektoncd-pipeline-and-push --showlog \
     --param UPLOADER_HOST=$(grep host ~/.uploader.cfg|sed 's/host=//') \
-	-i plumbing-git=plumbing-git -i tektoncd-pipeline-git=tektoncd-pipeline-git --serviceaccount builder
+	-i plumbing-git=plumbing-git \
+    -i tektoncd-pipeline-git=tektoncd-pipeline-git \
+    --serviceaccount builder

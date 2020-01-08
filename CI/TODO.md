@@ -6,7 +6,7 @@
 * Investigate if we really need a BASE_IMAGE
 * Make sure containers are updated with latest packages (currently disabled for iterations).
 * Commonalise the image names for the base golang versions across tasks.
-* Build special case nop image too
+* Build special case nop image too... it using tinanon/true atm
 * Push to quay.io release.yaml + nightly images when succeed
 * Handle multiple openshift targets
 * Rewrite resolv-yamls.sh, it's still as bad as before and didn't have the

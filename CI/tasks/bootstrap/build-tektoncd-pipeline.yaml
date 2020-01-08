@@ -31,7 +31,7 @@ spec:
         secretKeyRef:
           name: openshift-install
           key: uploader-password
-    # TODO: change to a parameters since that's probably going to be changed
+    # TODO: change to a parameter since that's probably going to be changed
     # done passably often and we want to commonalize it for the other projects.
     image: openshift/origin-release:golang-1.13
     workingDir: $(inputs.resources.plumbing-git.path)
@@ -65,16 +65,6 @@ spec:
     script: |
       #!/usr/bin/env bash
       set -exu
-
-      mkdir -p ${HOME}/.docker
-
-      curl -o ${HOME}/.docker/config.json \
-           -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
-           $(inputs.params.UPLOADER_HOST)/private/CI/$(inputs.params.CLUSTER_NAME)/config.json
-
-      REGISTRY_URL=$(python3 -c \
-           'import json, sys;a = json.loads(sys.stdin.read())["auths"];print(list(a)[0])' < ${HOME}/.docker/config.json)
-
       # I wish we didn't need to do that as it slows down the build, we can
       # probably build our own image but that's more machinery to setup.... (and
       # that's not bcause i am lazy i promess)
@@ -84,7 +74,7 @@ spec:
         container_build container_push \
         OUTPUT_DIR=/workspace/output \
         PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-pipeline-git.path) \
-        REGISTRY_URL=${REGISTRY_URL} \
+        REGISTRY_URL=quay.io/openshift-pipelines/ci \
         REGISTRY_AUTH_FILE=${HOME}/.docker/config.json
 
   - name: generate-release-yaml
@@ -120,7 +110,7 @@ spec:
       generate_pipeline_resources \
         $(inputs.resources.tektoncd-pipeline-git.path) \
         /workspace/output/release.yaml \
-        image-registry.openshift-image-registry.svc:5000/ci-openshift-pipelines
+        quay.io/openshift-pipelines/ci
 
       upload /workspace/output/release.yaml
 
