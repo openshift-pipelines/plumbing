@@ -61,7 +61,7 @@ container_push: ## Use buildah to push the containers to the $REGISTRY_URL
 	@set -xe ;pushd $(OUTPUT_DIR);\
 	  for dfile in */;do \
 		cd $${dfile};\
-			$(BUILDAH) push --tls-verify=false $(REGISTRY_URL):`basename $$dfile` ;\
+			$(BUILDAH) push $(REGISTRY_URL):`basename $$dfile` ;\
 		cd .. ;\
 	  done ;\
 	popd >/dev/null
