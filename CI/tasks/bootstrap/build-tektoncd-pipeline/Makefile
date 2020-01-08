@@ -6,9 +6,8 @@ PIPELINE_REPOSITORY := /workspace/tektoncd-pipeline-git
 BUILDAH := buildah
 
 # TODO: remove this REGISTRY URL to something else
-REGISTRY_URL := default-route-openshift-image-registry.apps.samchmou2.devcluster.openshift.com
+REGISTRY_URL := quay.io/openshift-pipelines/ci
 REGISTRY_AUTH_FILE := ~/.docker/config.json
-REGISTRY_NAMESPACE := ci-openshift-pipelines
 
 # The addons images which means shipped in ./vendor files and not in ./cmd
 ADDN_IMAGES=./vendor/github.com/GoogleCloudPlatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher
@@ -49,20 +48,20 @@ create_dockerfiles: ## Create Dockerfiles for binaries, it usually need to be ru
 
 container_build: ## Use buildah to start building the containers
 	@echo "Building containers..."
-	@set -e; pushd $(OUTPUT_DIR);\
+	@set -xe; pushd $(OUTPUT_DIR);\
 	  for dfile in */;do \
 		cd $${dfile};\
-			$(BUILDAH) bud -t $(REGISTRY_URL)/$(REGISTRY_NAMESPACE)/`basename $$dfile` -f Dockerfile . ;\
+			$(BUILDAH) bud -t $(REGISTRY_URL):`basename $$dfile` -f Dockerfile . ;\
 		cd .. ;\
 	  done ;\
 	popd >/dev/null
 
 container_push: ## Use buildah to push the containers to the $REGISTRY_URL
 	@echo "Pushing containers..."
-	@set -e ;pushd $(OUTPUT_DIR);\
+	@set -xe ;pushd $(OUTPUT_DIR);\
 	  for dfile in */;do \
 		cd $${dfile};\
-			$(BUILDAH) push --tls-verify=false $(REGISTRY_URL)/$(REGISTRY_NAMESPACE)/`basename $$dfile` ;\
+			$(BUILDAH) push --tls-verify=false $(REGISTRY_URL):`basename $$dfile` ;\
 		cd .. ;\
 	  done ;\
 	popd >/dev/null
