@@ -1,10 +1,9 @@
 # Not using minimal since we need extra stuff from fatso ubi
-FROM registry.access.redhat.com/ubi8/ubi:latest
+FROM registry.access.redhat.com/ubi8/ubi-minmal:latest
 
 # Todo: Reenable after POC and merge the two yum run
-# RUN RUN yum -y update && \
-#     yum clean all && rm -rf /var/cache/yum
-RUN yum install -y git openssh-clients && yum clean all && rm -rf /var/cache/yum
+#RUN microdnf update -y && rm -rf /var/cache/yum
+RUN microdnf install git openssh-clients && microdnf clean all && rm -rf /var/cache/yum
 
 ENV HOME=/ko-app PATH=${HOME}:${PATH}
 COPY %%BASE_BIN%% ${HOME}/%%BASE_BIN%%.orig
