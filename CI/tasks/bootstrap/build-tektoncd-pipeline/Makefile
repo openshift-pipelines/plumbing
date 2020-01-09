@@ -6,8 +6,7 @@ PIPELINE_REPOSITORY := /workspace/tektoncd-pipeline-git
 BUILDAH := buildah
 
 # TODO: remove this REGISTRY URL to something else
-REGISTRY_URL := quay.io/openshift-pipelines/ci
-REGISTRY_AUTH_FILE := ~/.docker/config.json
+REGISTRY_URL := quay.io/openshift-pipeline/ci
 
 # The addons images which means shipped in ./vendor files and not in ./cmd
 ADDN_IMAGES=./vendor/github.com/GoogleCloudPlatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher

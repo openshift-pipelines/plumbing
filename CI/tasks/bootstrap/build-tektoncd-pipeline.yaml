@@ -74,8 +74,7 @@ spec:
         container_build container_push \
         OUTPUT_DIR=/workspace/output \
         PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-pipeline-git.path) \
-        REGISTRY_URL=quay.io/openshift-pipelines/ci \
-        REGISTRY_AUTH_FILE=${HOME}/.docker/config.json
+        REGISTRY_URL=quay.io/openshift-pipeline/ci
 
   - name: generate-release-yaml
     env:
@@ -110,7 +109,7 @@ spec:
       generate_pipeline_resources \
         $(inputs.resources.tektoncd-pipeline-git.path) \
         /workspace/output/release.yaml \
-        quay.io/openshift-pipelines/ci
+        quay.io/openshift-pipeline/ci
 
       upload /workspace/output/release.yaml
 
