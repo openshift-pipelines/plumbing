@@ -7,7 +7,7 @@ krec () {
 }
 cd $(git rev-parse --show-toplevel)/CI
 
-kubectl get -l "tekton.dev/openshift4-install" tr -o name|xargs kubectl delete
+kubectl get -l "tekton.dev/task=openshift4-install" tr -o name|xargs kubectl delete
 
 REKICKALL=${1-""}
 
