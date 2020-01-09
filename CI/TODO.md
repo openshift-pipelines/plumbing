@@ -14,3 +14,4 @@
 * Use a [S3 bucket](https://git.io/JexBs) when we do private stuff instead of having to do go-simple-uploader.
   (Altought gsu it works well enough for our use case and can give us anonymous/authenticated as we want)
 * Create our own SA, don't use existing....
+* Remove old crunch like [tasks/components/pipeline/e2e-tests-openshift.sh](tasks/components/pipeline/e2e-tests-openshift.sh)
