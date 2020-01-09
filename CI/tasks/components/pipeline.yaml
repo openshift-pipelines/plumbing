@@ -80,7 +80,7 @@ spec:
       set -eux
       # TODO: Kaniko could be enabled if we run it with a priv sa to it.
       # TODO: sidecar-ready is failing due of readinessprobe not doign its work, let's investigate this later
-      declare -ar SKIP_YAML_TEST=(sidecar-ready git-volume dind-sidecar pull-private-image build-gcs-targz build-gcs-zip gcs-resource)
+      declare -ar SKIP_YAML_TEST=(pipelinerun sidecar-ready git-volume dind-sidecar pull-private-image build-gcs-targz build-gcs-zip gcs-resource)
 
       TIMESTAMP=$(date '+%Y%m%d-%Hh%M-%S')
       NS=tekton-pipeline-tests-yaml-${TIMESTAMP}
@@ -100,7 +100,7 @@ spec:
       # We are applying patches if any
       if [[ -d $(inputs.resources.plumbing-git.path)/CI/tasks/components/pipeline/patches ]];then
         for patch in $(inputs.resources.plumbing-git.path)/CI/tasks/components/pipeline/patches/*;do
-            [[ ${patch} != *patch || ${patch} != *diff ]] && continue
+            [[ ${patch} != *patch && ${patch} != *diff ]] && continue
             echo "Applying patch $(basename ${patch})"
             patch -p1 -i ${patch}
         done
