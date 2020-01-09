@@ -1,4 +1,3 @@
-# Not using minimal since we need extra stuff from fatso ubi
 FROM registry.access.redhat.com/ubi8/ubi-minmal:latest
 
 # Todo: Reenable after POC and merge the two yum run
