@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi-minmal:latest
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
 # Todo: Reenable after POC and merge the two yum run
 #RUN microdnf update -y && rm -rf /var/cache/yum
