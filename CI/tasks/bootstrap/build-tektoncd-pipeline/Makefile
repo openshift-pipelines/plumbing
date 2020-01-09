@@ -47,7 +47,7 @@ create_dockerfiles: ## Create Dockerfiles for binaries, it usually need to be ru
 
 container_build: ## Use buildah to start building the containers
 	@echo "Building containers..."
-	@set -xe; pushd $(OUTPUT_DIR);\
+	@set -e; pushd $(OUTPUT_DIR);\
 	  for dfile in */;do \
 		cd $${dfile};\
 			$(BUILDAH) bud -t $(REGISTRY_URL):`basename $$dfile` -f Dockerfile . ;\
@@ -57,7 +57,7 @@ container_build: ## Use buildah to start building the containers
 
 container_push: ## Use buildah to push the containers to the $REGISTRY_URL
 	@echo "Pushing containers..."
-	@set -xe ;pushd $(OUTPUT_DIR);\
+	@set -e ;pushd $(OUTPUT_DIR);\
 	  for dfile in */;do \
 		cd $${dfile};\
 			$(BUILDAH) push $(REGISTRY_URL):`basename $$dfile` ;\
