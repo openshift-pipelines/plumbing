@@ -22,7 +22,7 @@ build_binary: ## Build TektonCD pipelines binaries
 	@echo "Building binaries..."
 	@mkdir -p $(OUTPUT_DIR)/bin
 	@set -e;pushd $(PIPELINE_REPOSITORY) >/dev/null &&  \
-		env GOBIN=$(OUTPUT_DIR)/bin \
+		env CGO_ENABLED=0 GOBIN=$(OUTPUT_DIR)/bin \
 		    go install $(PIPELINE_REPOSITORY)/cmd/* $(ADDN_IMAGES) ; \
 	popd >/dev/null
 
