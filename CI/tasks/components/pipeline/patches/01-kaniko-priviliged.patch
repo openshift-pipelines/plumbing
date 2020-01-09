@@ -1,0 +1,42 @@
+diff --git a/examples/pipelineruns/pipelinerun.yaml b/examples/pipelineruns/pipelinerun.yaml
+index 2391bcfd..227845eb 100644
+--- a/examples/pipelineruns/pipelinerun.yaml
++++ b/examples/pipelineruns/pipelinerun.yaml
+@@ -103,6 +103,8 @@ spec:
+     - --dockerfile=$(inputs.params.pathToDockerFile)
+     - --destination=$(outputs.resources.builtImage.url)
+     - --context=$(inputs.params.pathToContext)
++    securityContext:
++      privileged: true
+ ---
+ # This task deploys with kubectl apply -f <filename>
+ apiVersion: tekton.dev/v1alpha1
+@@ -244,6 +246,7 @@ kind: PipelineRun
+ metadata:
+   name: demo-pipeline-run-1
+ spec:
++  serviceAccountName: buidler
+   pipelineRef:
+     name: demo-pipeline
+   serviceAccountName: 'default'
+diff --git a/examples/taskruns/build-push-kaniko.yaml b/examples/taskruns/build-push-kaniko.yaml
+index b25a263e..ddaae858 100644
+--- a/examples/taskruns/build-push-kaniko.yaml
++++ b/examples/taskruns/build-push-kaniko.yaml
+@@ -54,7 +54,7 @@ spec:
+     - --context=$(inputs.params.pathToContext)
+     - --oci-layout-path=$(inputs.resources.builtImage.path)
+     securityContext:
+-      runAsUser: 0
++      privileged: true
+   sidecars:
+     - image: registry
+       name: registry
+@@ -64,6 +64,7 @@ kind: TaskRun
+ metadata:
+   name: build-push-kaniko
+ spec:
++  serviceAccountName: builder
+   taskRef:
+     name: build-push-kaniko
+   inputs:

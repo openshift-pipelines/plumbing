@@ -18,47 +18,47 @@ spec:
     - name: CLUSTER_NAME
       description: Cluster name
   steps:
-  - name: go-tests
-    env:
-    - name: UPLOADER_USERNAME
-      valueFrom:
-        secretKeyRef:
-          name: openshift-install
-          key: uploader-username
-    - name: UPLOADER_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: openshift-install
-          key: uploader-password
-    image: $(inputs.params.IMAGE_NAME)
-    workingDir: $(inputs.resources.tektoncd-pipeline-git.path)
-    script: |
-      #!/usr/bin/env bash
-      set -eu
-      TIMESTAMP=$(date '+%Y%m%d-%Hh%M-%S')
-      NS=tekton-pipeline-tests-${TIMESTAMP}
-      failed=0
-      export BUILD_NUMBER=1
+  # - name: go-tests
+  #   env:
+  #   - name: UPLOADER_USERNAME
+  #     valueFrom:
+  #       secretKeyRef:
+  #         name: openshift-install
+  #         key: uploader-username
+  #   - name: UPLOADER_PASSWORD
+  #     valueFrom:
+  #       secretKeyRef:
+  #         name: openshift-install
+  #         key: uploader-password
+  #   image: $(inputs.params.IMAGE_NAME)
+  #   workingDir: $(inputs.resources.tektoncd-pipeline-git.path)
+  #   script: |
+  #     #!/usr/bin/env bash
+  #     set -eu
+  #     TIMESTAMP=$(date '+%Y%m%d-%Hh%M-%S')
+  #     NS=tekton-pipeline-tests-${TIMESTAMP}
+  #     failed=0
+  #     export BUILD_NUMBER=1
 
-      mkdir -p ${HOME}/.kube
-      curl -o ${HOME}/.kube/config \
-           -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
-           $(inputs.params.UPLOADER_HOST)/private/CI/$(inputs.params.CLUSTER_NAME)/kubeconfig
-      export KUBECONFIG=${HOME}/.kube/config
+  #     mkdir -p ${HOME}/.kube
+  #     curl -o ${HOME}/.kube/config \
+  #          -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+  #          $(inputs.params.UPLOADER_HOST)/private/CI/$(inputs.params.CLUSTER_NAME)/kubeconfig
+  #     export KUBECONFIG=${HOME}/.kube/config
 
-      oc new-project ${NS}
+  #     oc new-project ${NS}
 
-      source test/e2e-common.sh
+  #     source test/e2e-common.sh
 
-      # Run the integration tests
-      header "Running Go e2e tests"
+  #     # Run the integration tests
+  #     header "Running Go e2e tests"
 
-      go test -v -failfast -count=1 -tags=e2e \
-        -ldflags '-X github.com/tektoncd/pipeline/test.missingKoFatal=false -X github.com/tektoncd/pipeline/test.skipRootUserTests=true' \
-        ./test -timeout=20m --kubeconfig=${KUBECONFIG}  || failed=1
+  #     go test -v -failfast -count=1 -tags=e2e \
+  #       -ldflags '-X github.com/tektoncd/pipeline/test.missingKoFatal=false -X github.com/tektoncd/pipeline/test.skipRootUserTests=true' \
+  #       ./test -timeout=20m --kubeconfig=${KUBECONFIG}  || failed=1
 
-      (( failed )) && fail_test
-      success
+  #     (( failed )) && fail_test
+  #     success
   - name: yaml-tests
     env:
     - name: UPLOADER_USERNAME
@@ -89,7 +89,19 @@ spec:
       curl -o ${HOME}/.kube/config \
            -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
            $(inputs.params.UPLOADER_HOST)/private/CI/$(inputs.params.CLUSTER_NAME)/kubeconfig
+
       oc new-project ${NS}
+
+      # We are adding the serviceAccount builder to priviliged so we can run kaniko tasks..
+      oc adm policy add-scc-to-user privileged -z builder
+
+      # We are applying patches if any
+      if [[ -d $(inputs.resources.plumbing-git.path)/CI/tasks/components/pipeline/patches ]];then
+        for patch in $(inputs.resources.plumbing-git.path)/CI/tasks/components/pipeline/patches/*;do
+            echo "Applying patch $(basename ${path})"
+            patch -p1 -i ${patch}
+        done
+      fi
 
       # We do this so cloudevent would know where to go for our namespace...
       sed -i  "s/sink.default/sink.${NS}/"  $(inputs.resources.tektoncd-pipeline-git.path)/examples/taskruns/cloud-event.yaml
