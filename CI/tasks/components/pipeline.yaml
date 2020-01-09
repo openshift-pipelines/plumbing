@@ -58,6 +58,8 @@ spec:
   #       ./test -timeout=20m --kubeconfig=${KUBECONFIG}  || failed=1
 
   #     (( failed )) && fail_test
+  #     echo "Cleaning up NS: ${NS}"
+  #     kubectl delete ns ${NS}
   #     success
   - name: yaml-tests
     env:
@@ -145,4 +147,5 @@ spec:
 
       (( failed )) && fail_test
 
+      kubectl delete ns ${NS}
       success
