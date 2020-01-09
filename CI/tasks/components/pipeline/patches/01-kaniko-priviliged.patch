@@ -1,5 +1,5 @@
 diff --git a/examples/pipelineruns/pipelinerun.yaml b/examples/pipelineruns/pipelinerun.yaml
-index 2391bcfd..227845eb 100644
+index 2391bcfd..37cd4c76 100644
 --- a/examples/pipelineruns/pipelinerun.yaml
 +++ b/examples/pipelineruns/pipelinerun.yaml
 @@ -103,6 +103,8 @@ spec:
@@ -11,14 +11,17 @@ index 2391bcfd..227845eb 100644
  ---
  # This task deploys with kubectl apply -f <filename>
  apiVersion: tekton.dev/v1alpha1
-@@ -244,6 +246,7 @@ kind: PipelineRun
+@@ -244,9 +246,9 @@ kind: PipelineRun
  metadata:
    name: demo-pipeline-run-1
  spec:
-+  serviceAccountName: buidler
++  serviceAccountName: builder
    pipelineRef:
      name: demo-pipeline
-   serviceAccountName: 'default'
+-  serviceAccountName: 'default'
+   resources:
+   - name: source-repo
+     resourceRef:
 diff --git a/examples/taskruns/build-push-kaniko.yaml b/examples/taskruns/build-push-kaniko.yaml
 index b25a263e..ddaae858 100644
 --- a/examples/taskruns/build-push-kaniko.yaml
