@@ -169,7 +169,7 @@ spec:
       #
       # We should probably set it in an external script but that's much easier
       # to iterate here atm.
-      set -e
+      set -ex
       gpg_args=
       key=
 
@@ -201,17 +201,7 @@ spec:
       bzip2 -9c .openshift_install.log > auth/install.log.bz2
       tail -2 .openshift_install.log > auth/webaccess
 
-      # Create a new namespace inside the bootstraped and set the registry as
-      # public and export its config file.  The tricks here is to make sure to
-      # get the exposed public URL not the internal one and to don't change the
-      # kubeconfig.
-      cp auth/kubeconfig /tmp/registry-kubeconfig
-      export KUBECONFIG=/tmp/registry-kubeconfig
-      oc new-project ci-openshift-pipelines >/dev/null && echo "ci-openshift-pipelines project has been created"
-
-      # Give public image access to the ci-openshift-pipelines images so every
-      # authenticated users can use it.
-      oc adm policy add-role-to-group system:image-puller system:authenticated -n ci-openshift-pipelines
+      export KUBECONFIG=auth/kubeconfig
 
       # Sometime the url can let us down, so let's add a counter
       i=1
@@ -219,6 +209,13 @@ spec:
         oc login -u kubeadmin -p "$(cat auth/kubeadmin-password)" --insecure-skip-tls-verify && break || true
         sleep 5
         (( i++ ))
+      done
+
+      # TODO: make it configurable
+      MACHINESET=3
+      echo "Scaling machinsets to ${MACHINESET}"
+      for m in $(oc get machineset -n openshift-machine-api -o name); do
+        oc scale --replicas=${MACHINESET} ${m} -n openshift-machine-api
       done
 
       # We take all files and encrypt them to multiples gpg keys (openshift
