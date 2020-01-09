@@ -221,17 +221,6 @@ spec:
         (( i++ ))
       done
 
-      # Expose imageregistry to external, so we can push in there (we use the
-      # internal registry url to access images tho)
-      oc patch configs.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge
-
-      # Wait a bit just to make sure things are here
-      sleep 5
-
-      # Login into the regitry externally and get the access token in auth/registry.config.json
-      oc registry --insecure=true login --to=auth/registry.config.json \
-      --registry="$(oc get route default-route -n openshift-image-registry --template='{{ .spec.host }}')"
-
       # We take all files and encrypt them to multiples gpg keys (openshift
       # pipelines devs), we do as well for the logs to ensure no leakage can
       # happen.
@@ -258,5 +247,4 @@ spec:
       # say cluster registry
       #
       # they are in a private repo
-      upload auth/registry.config.json private/CI/$(inputs.params.CLUSTER_NAME)/config.json
       upload auth/kubeconfig private/CI/$(inputs.params.CLUSTER_NAME)/kubeconfig
