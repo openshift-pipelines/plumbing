@@ -99,7 +99,7 @@ spec:
       if [[ -d $(inputs.resources.plumbing-git.path)/CI/tasks/components/pipeline/patches ]];then
         for patch in $(inputs.resources.plumbing-git.path)/CI/tasks/components/pipeline/patches/*;do
             [[ ${patch} != *patch || ${patch} != *diff ]] && continue
-            echo "Applying patch $(basename ${path})"
+            echo "Applying patch $(basename ${patch})"
             patch -p1 -i ${patch}
         done
       fi
