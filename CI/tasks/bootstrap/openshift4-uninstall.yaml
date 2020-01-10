@@ -51,5 +51,10 @@ spec:
       # it's no there (we have been reaped already). Then let's just give up and
       # hope for the best.
       curl -s -O $(inputs.params.UPLOADER_HOST)/CI/$(inputs.params.CLUSTER_NAME)/metadata.json || exit
+
+      # Do the actually install
       echo "Trying to delete previous cluster (if it wasn't reaped already)"
       /usr/local/bin/openshift-install destroy cluster  --log-level=debug || true
+
+      # Finally delete the metadata.json cause so we dont run the destroy cluster again
+      curl -L -X DELETE -F path=CI/$(inputs.params.CLUSTER_NAME)/metadata.json $(inputs.params.UPLOADER_HOST)/upload
