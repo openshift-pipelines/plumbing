@@ -7,6 +7,6 @@ spec:
   type: git
   params:
   - name: revision
-    value: chmouel-TEST
+    value: master
   - name: url
-    value: https://github.com/chmouel/tektoncd-pipeline
+    value: https://github.com/tektoncd/pipeline
