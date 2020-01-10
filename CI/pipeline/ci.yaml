@@ -34,10 +34,24 @@ spec:
       - name: DOCKERFILE
         value: CI/bootstrap/Dockerfile
 
+  - name: uninstall-openshift4-previous
+    taskRef:
+      name: openshift4-uninstall
+    runAfter: [build-bootstrap]
+    resources:
+      inputs:
+        - name: plumbing-git
+          resource: plumbing-git
+    params:
+      - name: IMAGE_NAME
+        value: $(params.IMAGE_NAME)
+      - name: UPLOADER_HOST
+        value: $(params.UPLOADER_HOST)
+
   - name: install-openshift4-cluster
     taskRef:
       name: openshift4-install
-    runAfter: [build-bootstrap]
+    runAfter: [uninstall-openshift4-previous]
     resources:
       inputs:
         - name: plumbing-git

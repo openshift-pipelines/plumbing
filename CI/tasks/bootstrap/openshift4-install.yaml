@@ -30,7 +30,6 @@ spec:
 
     - name: UPLOADER_HOST
       description: If you have this https://github.com/chmouel/openshift-django-uploader/ installed then set it here.
-      default: ""
 
   steps:
   - name: openshift-install-config
@@ -89,41 +88,6 @@ spec:
       pullSecret: '$REGISTRY_TOKEN'
       sshKey: '$PUBLIC_SSH_KEY'
       EOF
-
-  - name: openshift-install-clean-previous-install
-    image: $(inputs.params.IMAGE_NAME)
-    workingDir: /workspace/install
-    env:
-    - name: AWS_ACCESS_KEY_ID
-      valueFrom:
-        secretKeyRef:
-          name: openshift-install
-          key: aws-access-key-id
-    - name: AWS_SECRET_ACCESS_KEY
-      valueFrom:
-        secretKeyRef:
-          name: openshift-install
-          key: aws-secret-access-key
-    script: |
-      #!/usr/bin/env bash
-      set -eu
-      [[ -n "$(inputs.params.UPLOADER_HOST)" ]] || exit 0
-
-      # We are trying to delete the DNS record for the target install.
-      # Explaination:
-      # After the 'reaper' has reaped our openshift install in the aws account, it
-      # forget to delete some A records, so the reinstall fails :((
-      # let's be helpful and do it for the reaper ASAP....
-      python $(inputs.resources.plumbing-git.path)/CI/misc/openshift-install-cleanup-route53.records.py \
-             -f $(inputs.params.CLUSTER_NAME)
-
-      # We now try to get the metadata.json since that would give the
-      # information needed for the destroy clsuter command of the installer, if
-      # it's no there (we have been reaped already). Then let's just give up and
-      # hope for the best.
-      curl -s -O $(inputs.params.UPLOADER_HOST)/CI/$(inputs.params.CLUSTER_NAME)/metadata.json || exit
-      echo "Trying to delete previous cluster (if it wasn't reaped already)"
-      /usr/local/bin/openshift-install destroy cluster  --log-level=debug || true
 
   - name: openshift-install-create
     env:
