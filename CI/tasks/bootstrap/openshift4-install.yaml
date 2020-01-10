@@ -133,7 +133,7 @@ spec:
       #
       # We should probably set it in an external script but that's much easier
       # to iterate here atm.
-      set -ex
+      set -e
       gpg_args=
       key=
 

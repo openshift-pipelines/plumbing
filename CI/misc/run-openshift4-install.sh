@@ -1,4 +1,5 @@
-set -eux
+#!/usr/bin/env bash
+set -eu
 krec () {
 	for a in $@; do
 	   kubectl delete -f $a || true

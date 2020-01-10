@@ -77,7 +77,7 @@ spec:
     workingDir: $(inputs.resources.tektoncd-pipeline-git.path)
     script: |
       #!/usr/bin/env bash
-      set -eux
+      set -eu
       # pipelinerun does way way too much kubernetes specifics stuff with a cluster-admin...
       # TODO: sidecar-ready is failing due of readinessprobe not doign its work, let's investigate this later
       declare -ar SKIP_YAML_TEST=(pipelinerun sidecar-ready

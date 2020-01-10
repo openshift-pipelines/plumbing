@@ -2,7 +2,7 @@
 # Simple script so you can backup/restore your simple uploader between nightly reinstall
 # We really need to keep the metadata.json to do an uninstall before install,
 # since os4 install reaper is buggy and donest delete the DNS name
-set -ex
+set -e
 
 mkdir -p ~/tmp/backup
 cd ~/tmp/backup

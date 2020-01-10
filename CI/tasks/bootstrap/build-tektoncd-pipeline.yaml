@@ -37,7 +37,7 @@ spec:
     workingDir: $(inputs.resources.plumbing-git.path)
     script: |
       #!/usr/bin/env bash
-      set -ex
+      set -e
       make -C $(inputs.resources.plumbing-git.path)/CI/tasks/bootstrap/build-tektoncd-pipeline \
         build_binary create_dockerfiles \
         PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-pipeline-git.path) \
@@ -64,7 +64,7 @@ spec:
       privileged: true
     script: |
       #!/usr/bin/env bash
-      set -exu
+      set -eu
       # I wish we didn't need to do that as it slows down the build, we can
       # probably build our own image but that's more machinery to setup.... (and
       # that's not bcause i am lazy i promess)
@@ -129,7 +129,7 @@ spec:
     workingDir: $(inputs.resources.plumbing-git.path)
     script: |
       #!/usr/bin/env bash
-      set -eux
+      set -eu
       mkdir -p ${HOME}/.kube
       curl -o ${HOME}/.kube/config \
            -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
