@@ -113,7 +113,7 @@ spec:
   - name: delete-cluster
     taskRef:
       name: openshift4-uninstall
-    runAfter: [repush-images-releases]  # Should be the last task
+    runAfter: [push-images-release-nightly]  # Should be the last task
     resources:
       inputs:
         - name: plumbing-git
