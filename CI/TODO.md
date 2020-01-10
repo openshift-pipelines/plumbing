@@ -7,6 +7,7 @@
 * Move all settings to one place
 * Document flow and structure
 * go over all the TODOs in the code
+* move CI/bootstrap to CI/tasks/bootstrap/image
 
 # Low (post POC)
 * Reevaluate the SKIPPED e2e tests for pipeline and see if we can improve.
