@@ -3,11 +3,12 @@
 ## High (POC)
 * Make sure containers are updated with latest packages (currently disabled for iterations).
 * Commonalise the image names for the base golang versions across tasks.
-* Push to quay.io release.yaml + nightly images when succeed
 * Move all settings to one place
 * Document flow and structure
 * go over all the TODOs in the code
 * move CI/bootstrap to CI/tasks/bootstrap/image
+* Add buildah to bootstrap and use that so we don't have to install make all the
+  time
 
 # Low (post POC)
 * Reevaluate the SKIPPED e2e tests for pipeline and see if we can improve.
