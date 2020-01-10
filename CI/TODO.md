@@ -6,6 +6,7 @@
 * Push to quay.io release.yaml + nightly images when succeed
 * Move all settings to one place
 * Document flow and structure
+* go over all the TODOs in the code
 
 # Low (post POC)
 * Reevaluate the SKIPPED e2e tests for pipeline and see if we can improve.
