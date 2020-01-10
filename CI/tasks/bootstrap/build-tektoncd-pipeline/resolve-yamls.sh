@@ -30,6 +30,7 @@ function resolve_resources() {
         # busybox => registry.access.redhat.com/ubi8/ubi-minimal:latest \
         # -e "s%tianon/true%${registry_prefix}:nop%" \
         sed -e "s%busybox%registry.access.redhat.com/ubi8/ubi-minimal:latest%" \
+            -e "s%tianon/true%${registry_prefix}:nop%" \
             -e "s%\(.* image: \)\(github.com\)\(.*\/\)\(.*\)%\1 ${registry_prefix}:\4%" \
             -r -e "s,github.com/tektoncd/pipeline/cmd/${image_regexp},${registry_prefix}:\1,g" \
             $yaml > ${TMP}

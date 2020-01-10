@@ -11,6 +11,9 @@ REGISTRY_URL := quay.io/openshift-pipeline/ci
 # The addons images which means shipped in ./vendor files and not in ./cmd
 ADDN_IMAGES=./vendor/github.com/GoogleCloudPlatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher
 
+# Special images that are special
+SNOWFLAKES_IMAGES=nop
+
 # The image which has extras, we are going to use `Dockerfile.extras` for it
 # instead of the very minimal `Dockerfiles`
 IMAGES_EXTRAS=creds-init git-init # the images that needs extra cares
@@ -44,6 +47,11 @@ create_dockerfiles: ## Create Dockerfiles for binaries, it usually need to be ru
 		mv $(OUTPUT_DIR)/bin/$$bcmd  $(OUTPUT_DIR)/$$bcmd/ ;\
 	done
 	@rmdir $(OUTPUT_DIR)/bin
+
+	@for sf in $(SNOWFLAKES_IMAGES);do \
+		mkdir -p $(OUTPUT_DIR)/$$sf/ ;\
+		cp Dockerfile.$$sf $(OUTPUT_DIR)/$$sf/ ;\
+	done
 
 container_build: ## Use buildah to start building the containers
 	@echo "Building containers..."
