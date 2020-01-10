@@ -5,8 +5,9 @@ PIPELINE_REPOSITORY := /workspace/tektoncd-pipeline-git
 # If you are testing it on osx you can override it with BUILDAH=docker
 BUILDAH := buildah
 
-# TODO: remove this REGISTRY URL to something else
 REGISTRY_URL := quay.io/openshift-pipeline/ci
+
+TARGET_REGISTRY_URL := quay.io/openshift-pipeline/nightly
 
 # The addons images which means shipped in ./vendor files and not in ./cmd
 ADDN_IMAGES=./vendor/github.com/GoogleCloudPlatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher
@@ -28,6 +29,14 @@ build_binary: ## Build TektonCD pipelines binaries
 		env CGO_ENABLED=0 GOBIN=$(OUTPUT_DIR)/bin \
 		    go install $(PIPELINE_REPOSITORY)/cmd/* $(ADDN_IMAGES) ; \
 	popd >/dev/null
+
+repush_binary: ## Take the images from REGISTRY_URL and push it to TARGET_REGISTRY_URL
+	@set -e;for cmd in $(ALL_BINARIES) $(ADDN_IMAGES) $(SNOWFLAKES_IMAGES);do \
+		bcmd=`basename $$cmd` ;\
+		buildah pull $(REGISTRY_URL):$$bcmd && \
+		buildah tag $(REGISTRY_URL):$$bcmd $(TARGET_REGISTRY_URL):$$bcmd && \
+		buildah push $(TARGET_REGISTRY_URL):$$bcmd ;\
+		done
 
 create_dockerfiles: ## Create Dockerfiles for binaries, it usually need to be run after build_binary but not enforced
 	@echo "Creating dockerfiles"
