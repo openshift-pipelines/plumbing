@@ -50,7 +50,7 @@ create_dockerfiles: ## Create Dockerfiles for binaries, it usually need to be ru
 
 	@for sf in $(SNOWFLAKES_IMAGES);do \
 		mkdir -p $(OUTPUT_DIR)/$$sf/ ;\
-		cp Dockerfile.$$sf $(OUTPUT_DIR)/$$sf/ ;\
+		cp -v Dockerfile.$$sf $(OUTPUT_DIR)/$$sf/Dockerfile ;\
 	done
 
 container_build: ## Use buildah to start building the containers
