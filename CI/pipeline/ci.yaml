@@ -93,3 +93,33 @@ spec:
         value: $(params.UPLOADER_HOST)
       - name: CLUSTER_NAME
         value: $(params.CLUSTER_NAME)
+
+  - name: push-images-release-nightly
+    taskRef:
+      name: repush-images-releases
+    runAfter: [pipeline-test]
+    resources:
+      inputs:
+        - name: plumbing-git
+          resource: plumbing-git
+        - name: tektoncd-pipeline-git
+          resource: tektoncd-pipeline-git
+    params:
+      - name: UPLOADER_HOST
+        value: $(params.UPLOADER_HOST)
+      - name: CLUSTER_NAME
+        value: $(params.CLUSTER_NAME)
+
+  - name: delete-cluster
+    taskRef:
+      name: openshift4-uninstall
+    runAfter: [repush-images-releases]  # Should be the last task
+    resources:
+      inputs:
+        - name: plumbing-git
+          resource: plumbing-git
+    params:
+      - name: IMAGE_NAME
+        value: $(params.IMAGE_NAME)
+      - name: UPLOADER_HOST
+        value: $(params.UPLOADER_HOST)
