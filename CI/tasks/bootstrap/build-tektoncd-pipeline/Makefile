@@ -39,9 +39,10 @@ create_dockerfiles: ## Create Dockerfiles for binaries, it usually need to be ru
 		mkdir -p $(OUTPUT_DIR)/$$bcmd/ ;\
 		dockerfile=Dockerfile ; \
 		[[ -n $$extra ]] && { \
-			cp uidwrapper $(OUTPUT_DIR)/$$bcmd/uidwrapper ;\
+			cp -v uidwrapper $(OUTPUT_DIR)/$$bcmd/uidwrapper ;\
 			dockerfile=Dockerfile.extras  ;\
 		} ;\
+		echo $(OUTPUT_DIR)/$$bcmd/Dockerfile ;\
 		sed -e "s,%%BASE_BIN%%,$$bcmd,g" $$dockerfile > \
 			$(OUTPUT_DIR)/$$bcmd/Dockerfile ;\
 		mv $(OUTPUT_DIR)/bin/$$bcmd  $(OUTPUT_DIR)/$$bcmd/ ;\
