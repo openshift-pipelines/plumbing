@@ -19,6 +19,19 @@ spec:
     - name: UPLOADER_HOST
       description: If you have this https://github.com/chmouel/openshift-django-uploader/ installed then set it here.
 
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+
   steps:
   - name: openshift-install-clean-previous-install
     image: $(inputs.params.IMAGE_NAME)
@@ -57,4 +70,5 @@ spec:
       /usr/local/bin/openshift-install destroy cluster  --log-level=debug || true
 
       # Finally delete the metadata.json cause so we dont run the destroy cluster again
-      curl -L -X DELETE -F path=CI/$(inputs.params.CLUSTER_NAME)/metadata.json $(inputs.params.UPLOADER_HOST)/upload
+      curl -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} -X DELETE \
+            -F path=CI/$(inputs.params.CLUSTER_NAME)/metadata.json $(inputs.params.UPLOADER_HOST)/upload
