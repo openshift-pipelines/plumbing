@@ -19,6 +19,10 @@ spec:
     - name: UPLOADER_HOST
       description: If you have this https://github.com/chmouel/openshift-django-uploader/ installed then set it here.
 
+  steps:
+  - name: openshift-install-clean-previous-install
+    image: $(inputs.params.IMAGE_NAME)
+    workingDir: /workspace/install
     env:
     - name: UPLOADER_USERNAME
       valueFrom:
@@ -31,12 +35,6 @@ spec:
         secretKeyRef:
           name: openshift-install
           key: uploader-password
-
-  steps:
-  - name: openshift-install-clean-previous-install
-    image: $(inputs.params.IMAGE_NAME)
-    workingDir: /workspace/install
-    env:
     - name: AWS_ACCESS_KEY_ID
       valueFrom:
         secretKeyRef:
