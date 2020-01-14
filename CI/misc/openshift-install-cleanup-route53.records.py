@@ -42,7 +42,7 @@ class NoGoZoneIsANogo(Exception):
 def delete_hosted_zone(zonename):
     zone = route53.get_zone(zonename)
     if not zone:
-        print("Count not find " + zonename)
+        print("Could not find " + zonename)
         return
     records = zone.get_records()
 
