@@ -9,7 +9,7 @@
 * move CI/bootstrap to CI/tasks/bootstrap/image
 * Add buildah to bootstrap and use that so we don't have to install make all the
   time
-* Specify release.yaml image by reference instead by tags.
+* Specify release.yaml image by digest instead by tags.
 * Create RoleBinding instead of `oc adm policy` thing...
 
 # Low (post POC)
