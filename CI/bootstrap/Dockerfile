@@ -9,5 +9,9 @@ RUN yum -y install python-boto && yum -y clean all && rm -rf /var/cache/yum
 ADD CI/bootstrap/scripts/openshift-install-download.sh /usr/local/bin/
 ADD CI/bootstrap/scripts/get-github-asset.sh /usr/local/bin/
 
+# Install yq and jq for template manipulation
+RUN curl -L -# -o /usr/local/bin/tkn `/usr/local/bin/get-github-asset.sh tektoncd/cli Linux-64bit` && \
+        chmod +x /usr/local/bin/tkn
+
 # Download openshift installer
 RUN /usr/local/bin/openshift-install-download.sh
