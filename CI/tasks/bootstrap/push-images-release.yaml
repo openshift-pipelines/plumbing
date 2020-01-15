@@ -3,7 +3,6 @@ apiVersion: tekton.dev/v1alpha1
 kind: Task
 metadata:
   name: repush-images-releases
-
   description: |
     Repush images from CI to a version and regenerate the yaml for it
 
@@ -94,7 +93,7 @@ spec:
         /workspace/nightly/release.yaml \
         quay.io/openshift-pipeline/nightly
 
-      upload /workspace/nightly/release.yaml /release/nightly.yaml
+      upload /workspace/nightly/release.yaml /release/pipeline/nightly.yaml
   volumes:
   - name: varlibcontainers
     emptyDir: {}
