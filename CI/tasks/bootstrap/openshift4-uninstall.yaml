@@ -61,7 +61,7 @@ spec:
       # information needed for the destroy clsuter command of the installer, if
       # it's no there (we have been reaped already). Then let's just give up and
       # hope for the best.
-      curl -f -s -O $(inputs.params.UPLOADER_HOST)/CI/$(inputs.params.CLUSTER_NAME)/metadata.json || exit
+      curl -f -s -O $(inputs.params.UPLOADER_HOST)/CI/$(inputs.params.CLUSTER_NAME)/metadata.json || exit 0
 
       # Do the actually install
       echo "Trying to delete previous cluster (if it wasn't reaped already)"
