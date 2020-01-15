@@ -8,5 +8,15 @@ OpenShift Container Platform.
 
 ## Architecture
 
-[![CRON Setup](CI/docs/images/cron-setup.png)](CI/docs/images/cron-setup.png)
-###### [source](CI/docs/diagrams/cron-setup.plantuml)
+[![CRON Setup](docs/images/cron-setup.png)](docs/images/cron-setup.png)
+###### [source](docs/diagrams/cron-setup.plantuml)
+
+
+[![CRON Setup](docs/images/pipeline-cirun.png)](docs/images/pipeline-cirun.png)
+###### [source](docs/diagrams/pipeline-cirun.plantuml)
+
+[![CRON Setup](docs/images/run-test.png)](docs/images/run-test.png)
+###### [source](docs/diagrams/run-test.plantuml)
+
+[![CRON Setup](docs/images/cron-end.png)](docs/images/cron-end.png)
+###### [source](docs/diagrams/cron-end.plantuml)
