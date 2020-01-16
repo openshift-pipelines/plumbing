@@ -33,5 +33,5 @@ kubectl create secret generic quay-reg-cred \
     --type=kubernetes.io/dockerconfigjson
 oc get sa builder -o yaml | grep -q -- '- name: quay-reg-cred' || {
     oc get sa builder -o json | \
-        python -c "import json, sys;r = json.loads(sys.stdin.read());r['secrets'].append({'name': 'quay-reg-cred'});print(json.dumps(r))"|oc apply -f-
+        python -c "import json, sys;r = json.loads(sys.stdin.read());r['secrets'].append({'name': 'quay-reg-cred'});print(json.dumps(r))"|oc apply -f- 2>/dev/null
 }
