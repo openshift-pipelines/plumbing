@@ -58,7 +58,7 @@ spec:
         ./test -timeout=20m --kubeconfig=${KUBECONFIG}  || failed=1
 
       (( failed )) && fail_test
-      
+
       echo "Cleaning up Test NS: ${NS}"
       kubectl delete ns ${NS}
       echo "Cleaning up arendelle namespaces"
@@ -118,31 +118,57 @@ spec:
       # e2e-tests.sh directly
       source test/e2e-common.sh
 
-      function create_resources() {
-        local resource=$1
-        echo ">> Creating resources ${resource}"
+      MAX_CONCURRENT_PIPELINE=3
 
-        # Applying the resources, either *taskruns or * *pipelineruns
-        for file in $(find ${REPO_ROOT_DIR}/examples/${resource}s/ -name *.yaml -not -path "${REPO_ROOT_DIR}/examples/${resource}s/no-ci/*" | sort); do
-            skipit=False
-            reltestname=$(basename $file|sed 's/.yaml//')
-            for skip in ${SKIP_YAML_TEST[@]};do
-                [[ ${reltestname} == ${skip} ]] && skipit=True
-            done
-            [[ ${skipit} == True ]] && {
-                echo ">>> INFO: skipping yaml test ${reltestname}"
-                continue
-            }
-            kubectl delete -n ${NS} -f ${file} 2>/dev/null || true
-            kubectl create -n ${NS} -f ${file} || return 1
-        done
+      function run_batched_yaml_tests() {
+          local resource=$1
+          echo ">> Creating resources ${resource}"
+
+          cnt=1
+          runtasks=()
+
+          # Applying the resources, either *taskruns or * *pipelineruns
+          for file in $(find ${REPO_ROOT_DIR}/examples/${resource}s -name '*.yaml' -not -path "*/no-ci/*" | sort); do
+              skipit=False
+              reltestname=$(basename $file|sed 's/.yaml//')
+              for skip in ${SKIP_YAML_TEST[@]};do
+                  [[ ${reltestname} == ${skip} ]] && skipit=True
+              done
+              [[ ${skipit} == True ]] && {
+                  echo ">>> INFO: skipping yaml test ${reltestname}"
+                  continue
+              }
+              echo ">>> Creating ${resource}/${reltestname}"
+              runtasks+=(${reltestname})
+              kubectl delete -n ${NS} -f ${file} >/dev/null 2>/dev/null || true
+              kubectl create -n ${NS} -f ${file} >/dev/null || return 1
+              [[ ${cnt} == ${MAX_CONCURRENT_PIPELINE} ]] && {
+                  if ! run_tests ${1}; then
+                      echo "FAILURE: "
+                      return 1
+                  fi
+                  echo "Done!!"
+                  sleep 2
+                  cnt=1
+                  for yamltest in ${runtasks[@]};do
+                      echo ">> Cleaning up ${resource}/${yamltest}"
+                      # We have so many OOMKILLED in that cluster that i rather cleanup as much as possible
+                      kubectl delete ${resource} -n ${NS} --all >/dev/null || true
+                      kubectl delete all -n ${NS} --all >/dev/null || true
+                      kubectl delete -n ${NS} -f ${REPO_ROOT_DIR}/examples/${resource}s/${yamltest}.yaml 2>/dev/null >/dev/null || true
+                  done
+                  runtasks=()
+              }
+              (( cnt+=1 ))
+          done
+          return 0
       }
 
 
       failed=0
       for test in taskrun pipelinerun; do
         header "Running YAML e2e tests for ${test}s"
-        if ! run_yaml_tests ${test}; then
+        if ! run_batched_yaml_tests ${test}; then
           echo ">>> ERROR: one or more YAML tests failed"
           output_yaml_test_results ${test}
           output_pods_logs ${test}
