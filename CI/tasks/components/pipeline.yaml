@@ -58,8 +58,11 @@ spec:
         ./test -timeout=20m --kubeconfig=${KUBECONFIG}  || failed=1
 
       (( failed )) && fail_test
-      echo "Cleaning up NS: ${NS}"
+      
+      echo "Cleaning up Test NS: ${NS}"
       kubectl delete ns ${NS}
+      echo "Cleaning up arendelle namespaces"
+      kubectl get ns | grep arendelle|awk '{print $1}'|xargs kubectl delete ns
       success
   - name: yaml-tests
     env:
