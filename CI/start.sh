@@ -51,8 +51,7 @@ run() {
 	kubectl delete -f ./pipeline/ci.yaml -f ./pipeline/ci-run.yaml 2>/dev/null || true
 	kubectl create -f ./pipeline/ci.yaml -f ./pipeline/ci-run.yaml
     echo -e "------ \e[96mFollow progress with: \e[0m"
-    echo "tkn pipeline logs openshift-pipeline-ci -f"
-
+    echo "tkn pipeline logs openshift-pipeline-ci -f -n ${TARGET_NAMESPACE}"
 }
 
 main() {
