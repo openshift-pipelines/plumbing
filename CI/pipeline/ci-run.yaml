@@ -4,7 +4,7 @@ kind: PipelineRun
 metadata:
   name: openshift-pipeline-ci-run
 spec:
-  timeout: "1h30m"
+  timeout: "2h"
   pipelineRef:
     name: openshift-pipeline-ci
   serviceAccountName: builder
