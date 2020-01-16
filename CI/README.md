@@ -18,7 +18,10 @@ This is done in a CRON running on OpenShift-CI kubernetes infrastructure.
 We install latest version of OpenShift Pipeline and  Triggers.
 
 We then start the [`start.sh`](start.sh) script to install and setting up the
-pipeline.
+pipeline and the triggers service.
+
+We create a Pull Request in openshift-plumbing repository which would get picked
+up by Webhook and Triggers.
 
 [![CRON Setup](docs/images/cron-setup.png)](docs/images/cron-setup.png)
 ###### [source](docs/diagrams/cron-setup.plantuml)
