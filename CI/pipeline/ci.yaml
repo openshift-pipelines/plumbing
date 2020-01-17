@@ -32,7 +32,7 @@ spec:
           resource: bootstrap-image
     params:
       - name: DOCKERFILE
-        value: CI/bootstrap/Dockerfile
+        value: CI/tasks/bootstrap/image/Dockerfile
 
   - name: uninstall-openshift4-previous
     taskRef:

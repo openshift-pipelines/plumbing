@@ -2,9 +2,7 @@
 
 ## High (POC)
 * Make sure containers are updated with latest packages (currently disabled for iterations).
-* Document flow and structure
 * go over all the TODOs in the code
-* move CI/bootstrap to CI/tasks/bootstrap/image
 * Add buildah to bootstrap and use that so we don't have to install make all the
   time
 * Specify release.yaml image by digest instead by tags.
