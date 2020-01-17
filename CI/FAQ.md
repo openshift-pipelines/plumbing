@@ -2,8 +2,8 @@
 
 * How do I run this locally from my laptop?
 
-  Just look at the [local.sh.sample](local.sh.sample), collect all the
-  credentials needed from there, and run the `assemble.sh` script. You can then
+  Just look at the [config.sh.sample](config.sh.sample), collect all the
+  credentials needed from there, and run the `start.sh` script. You can then
   use the [`tkn`](github.com/tektoncd/cli) CLI to track the update of the deployment like this :
 
   ```
