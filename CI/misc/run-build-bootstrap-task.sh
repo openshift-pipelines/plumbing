@@ -2,6 +2,8 @@
 # Shortcut to run the build bootstrap, just for giggles
 set -eu
 
+source $(git rev-parse --show-toplevel)/config.sh
+
 git push
 
 kubectl get -l "tekton.dev/task=build-tektoncd-pipeline-and-push" tr -o name|xargs kubectl delete
@@ -13,4 +15,4 @@ tkn task start build-tektoncd-pipeline-and-push --showlog \
     --param UPLOADER_HOST=$(grep host ~/.uploader.cfg|sed 's/host=//') \
 	-i plumbing-git=plumbing-git \
     -i tektoncd-pipeline-git=tektoncd-pipeline-git \
-    --serviceaccount builder
+    --serviceaccount ${SERVICE_ACCOUNT}

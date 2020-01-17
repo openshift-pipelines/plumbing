@@ -2,8 +2,6 @@
 
 ## High (POC)
 * Make sure containers are updated with latest packages (currently disabled for iterations).
-* Commonalise the image names for the base golang versions across tasks.
-* Move all settings to one place
 * Document flow and structure
 * go over all the TODOs in the code
 * move CI/bootstrap to CI/tasks/bootstrap/image
@@ -13,6 +11,7 @@
 * Create RoleBinding instead of `oc adm policy` thing...
 
 # Low (post POC)
+* Commonalise the image names for the base golang versions across tasks.
 * Reevaluate the SKIPPED e2e tests for pipeline and see if we can improve.
 * Rewrite resolv-yamls.sh, it's still as bad as before and didn't have the
   courage to get my head around it. (just made it work for the new CI)

@@ -99,8 +99,8 @@ spec:
 
       oc new-project ${NS}
 
-      # We are adding the serviceAccount builder to priviliged so we can run kaniko tasks..
-      oc adm policy add-scc-to-user privileged -z builder
+      # We are adding the serviceAccount %SERVICE_ACCOUNT% to priviliged so we can run kaniko tasks..
+      oc adm policy add-scc-to-user privileged -z %SERVICE_ACCOUNT%
 
       # We are applying patches if any
       if [[ -d $(inputs.resources.plumbing-git.path)/CI/tasks/components/pipeline/patches ]];then

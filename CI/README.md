@@ -8,7 +8,7 @@ OpenShift Container Platform.
 
 ## Flow
 
-## Bootstrap
+### Bootstrap
 
 Since we are running in an environment where there is no stable OpenShift4 we
 need to spin-up every night a new OpenShift 4 install.
@@ -26,7 +26,7 @@ up by Webhook and Triggers.
 [![CRON Setup](docs/images/cron-setup.png)](docs/images/cron-setup.png)
 ###### [source](docs/diagrams/cron-setup.plantuml)
 
-## Pipeline start.
+### Pipeline start.
 
 At first we build the pipeline and triggers binaries, create dockerfiles for
 it and push them to quay.io. We then create a `release-ci.yaml` referencing the
@@ -42,7 +42,7 @@ We are now running the different tests for the different components.
 [![CRON Setup](docs/images/run-test.png)](docs/images/run-test.png)
 ###### [source](docs/diagrams/run-test.plantuml)
 
-## End Pipeline
+### End Pipeline
 
 We have now validated our pipeline and we can produce and upload a final
 `release-nightly.yaml`
@@ -50,6 +50,21 @@ We have now validated our pipeline and we can produce and upload a final
 [![CRON Setup](docs/images/cron-end.png)](docs/images/cron-end.png)
 ###### [source](docs/diagrams/cron-end.plantuml)
 
-## Report back to GitHUB/Slack
+### Report back to GitHUB/Slack
 
 TODO:
+
+# Usage
+
+start configuring your config.sh with all the credentials/variable needed using
+the [config.sh.sample](config.sh.sample) as a starting point.
+
+Run it with :
+
+```
+./start.sh
+```
+
+and watch the log output until its done. 
+
+It usually takes more than 2h to do the whole shbang
