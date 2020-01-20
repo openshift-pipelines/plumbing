@@ -16,6 +16,19 @@ CATALOG_BRANCH=master
     echo "You need to configure your config.sh see config.sh.samples for how to do this"
     exit 1
 }
+
+while getopts "n" o; do
+    case "${o}" in
+        n)
+            norun=yes;
+            ;;
+        *)
+            echo "Invalid option"; exit 1;
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
 source config.sh
 
 K="kubectl -n ${TARGET_NAMESPACE}"
@@ -30,10 +43,6 @@ install_catalog_tasks() {
 }
 
 install() {
-	oc project ${TARGET_NAMESPACE} 2>/dev/null >/dev/null || {
-        echo -e "------ \e[96mCreating Project: ${TARGET_NAMESPACE}\e[0m"
-		oc new-project ${TARGET_NAMESPACE} >/dev/null
-    }
 
 	# We do this here so we can have some custom configuration in there, i.e: installing secret
 	[[ -e ./local.sh ]] && source "./local.sh"
@@ -51,6 +60,11 @@ install() {
 }
 
 config() {
+	oc project ${TARGET_NAMESPACE} 2>/dev/null >/dev/null || {
+        echo -e "------ \e[96mCreating Project: ${TARGET_NAMESPACE}\e[0m"
+		oc new-project ${TARGET_NAMESPACE} >/dev/null
+    }
+
     echo -e "------ \e[96mSettings openshift-install secret\e[0m"
     ${K} delete secret openshift-install 2>/dev/null >/dev/null || true
     ${K} create secret generic openshift-install \
@@ -74,10 +88,10 @@ config() {
     }
 }
 
-# TODO: move to kustomize
 # This takes a a dir or a file and apply environment variable (configs) to it.
 # If you specify a dir it would get all the yaml files in there or fail
 # miserably if you called it .yml!
+# TODO: move to kustomize
 config_params() {
     if [[ -d $1 ]];then
         files=(${1}/*.yaml)
@@ -94,8 +108,8 @@ run() {
     echo -e "------ \e[96mCreating pipeline and run\e[0m"
 	kubectl delete -f <(config_params ./pipeline/ci.yaml) \
             -f <(config_params ./pipeline/ci-run.yaml) 2>/dev/null || true
-	kubectl create -f <(config_params ./pipeline/ci.yaml) \
-            -f <(config_params ./pipeline/ci-run.yaml)
+	kubectl create -f <(config_params ./pipeline/ci.yaml) 
+    [[ -z ${norun} ]] && kubectl create -f <(config_params ./pipeline/ci-run.yaml) 
     echo -e "------ \e[96mFollow progress with: \e[0m"
     echo "tkn pipeline logs openshift-pipeline-ci -f -n ${TARGET_NAMESPACE}"
 }
