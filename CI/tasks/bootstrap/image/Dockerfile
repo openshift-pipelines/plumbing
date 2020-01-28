@@ -6,8 +6,8 @@ FROM openshift/origin-release:golang-1.13
 # RUN yum -y update && yum -y install python-boto && yum -y clean all && rm -rf /var/cache/yum
 RUN yum -y install python-boto && yum -y clean all && rm -rf /var/cache/yum
 
-ADD CI/bootstrap/scripts/openshift-install-download.sh /usr/local/bin/
-ADD CI/bootstrap/scripts/get-github-asset.sh /usr/local/bin/
+ADD CI/tasks/bootstrap/image/scripts/openshift-install-download.sh /usr/local/bin/
+ADD CI/tasks/bootstrap/image/scripts/get-github-asset.sh /usr/local/bin/
 
 # Install yq and jq for template manipulation
 RUN curl -L -# -o /usr/local/bin/tkn `/usr/local/bin/get-github-asset.sh tektoncd/cli Linux_x86_64.tar.gz` && \
