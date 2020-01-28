@@ -7,7 +7,7 @@ set -eu
 # Settings you are probably not going to change
 #
 # Catalog tasks to install
-CATALOG_TASKS="buildah/buildah"
+CATALOG_TASKS=""
 
 # Catalog branch where to install our remote tasks
 CATALOG_BRANCH=master
