@@ -7,7 +7,7 @@ set -eu
 # Settings you are probably not going to change
 #
 # Catalog tasks to install
-CATALOG_TASKS="buildah/buildah"
+CATALOG_TASKS=""
 
 # Catalog branch where to install our remote tasks
 CATALOG_BRANCH=master
@@ -48,12 +48,6 @@ install() {
 
 	# We do this here so we can have some custom configuration in there, i.e: installing secret
 	[[ -e ./local.sh ]] && source "./local.sh"
-
-	# We use the ${SERVICE_ACCOUNT} image for our building task until buildah can build without
-	# privileged
-    echo -e "------ \e[96mSetting Service Account ${SERVICE_ACCOUNT} as privileged\e[0m"
-	${K} get scc privileged -o yaml|grep -q -- "- system:serviceaccount:${TARGET_NAMESPACE}:${SERVICE_ACCOUNT}" ||
-		oc adm policy add-scc-to-user privileged -z ${SERVICE_ACCOUNT}
 
 	install_catalog_tasks
 
