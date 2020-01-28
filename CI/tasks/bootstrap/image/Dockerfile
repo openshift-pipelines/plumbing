@@ -10,7 +10,7 @@ ADD CI/tasks/bootstrap/image/scripts/openshift-install-download.sh /usr/local/bi
 ADD CI/tasks/bootstrap/image/scripts/get-github-asset.sh /usr/local/bin/
 
 # Install yq and jq for template manipulation
-RUN curl -L -# -o /usr/local/bin/tkn `/usr/local/bin/get-github-asset.sh tektoncd/cli Linux_x86_64.tar.gz` && \
+RUN curl -s -L -o /usr/local/bin/tkn `/usr/local/bin/get-github-asset.sh tektoncd/cli Linux_x86_64.tar.gz` && \
         chmod +x /usr/local/bin/tkn
 
 # Download openshift installer
