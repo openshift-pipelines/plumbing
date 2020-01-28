@@ -17,6 +17,8 @@ CATALOG_BRANCH=master
     exit 1
 }
 
+norun=
+
 while getopts "n" o; do
     case "${o}" in
         n)
