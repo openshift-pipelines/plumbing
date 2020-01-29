@@ -31,6 +31,15 @@ DEVELOPPER_PUBRING=""
 # Specify a filename not the content of the file
 QUAY_REGISTRY_CONFIG="" 
 
+# Add a GitHub token which would post back on GitHub the status of the PR when
+# using in triggers pr mode
+GITHUB_TOKEN=""
+
+# WebConsole URL sometime you may only need the oc get route things but if you
+# don't have the rights then you need to specify it directly
+CONSOLE_URL="https://$(oc get route -n openshift-console console -o jsonpath='{.spec.host}') "
+
 # Local Variables:
 # mode: shell-script
 # End:
+# vim: ft=bash

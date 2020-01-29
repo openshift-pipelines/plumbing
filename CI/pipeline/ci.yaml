@@ -9,20 +9,36 @@ spec:
     - name: UPLOADER_HOST
     - name: IMAGE_NAME
     - name: CLUSTER_NAME
+    - name: PULLREQ_REPO
+    - name: PULLREQ_SHA
+    - name: PULLREQ_ACTION
 
   resources:
     - name: plumbing-git
       type: git
+
     - name: tektoncd-pipeline-git
       type: git
+
     - name: bootstrap-image
       type: image
 
   tasks:
+  - name: start-comment-on-pr
+    taskRef:
+      name: start-comment-on-pr
+    params:
+      - name: PULLREQ_REPO
+        value: $(params.PULLREQ_REPO)
+      - name: PULLREQ_SHA
+        value: $(params.PULLREQ_SHA)
+      - name: PULLREQ_ACTION
+        value: $(params.PULLREQ_ACTION)
 
   - name: build-bootstrap
     taskRef:
       name: buildah
+    runAfter: [start-comment-on-pr]
     resources:
       inputs:
         - name: source
@@ -123,3 +139,13 @@ spec:
         value: $(params.IMAGE_NAME)
       - name: UPLOADER_HOST
         value: $(params.UPLOADER_HOST)
+
+  - name: finish-comment-on-pr
+    taskRef:
+      name: finish-comment-on-pr
+    runAfter: [delete-cluster]
+    params:
+      - name: PULLREQ_REPO
+        value: $(params.PULLREQ_REPO)
+      - name: PULLREQ_SHA
+        value: $(params.PULLREQ_SHA)

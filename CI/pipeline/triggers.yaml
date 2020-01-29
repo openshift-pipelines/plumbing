@@ -1,0 +1,244 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: start-comment-on-pr
+  description: |
+    This task will set the CI as running and add a link to the openshift console
+    viewer url.
+spec:
+  inputs:
+    params:
+      - name: PULLREQ_REPO
+      - name: PULLREQ_SHA
+      - name: PULLREQ_ACTION
+  steps:
+    - name: comment-first
+      env:
+        - name: PR
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['tekton.dev/pipelineRun']
+
+        - name: NS
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+
+        - name: CONSOLE_URL
+          valueFrom:
+            secretKeyRef:
+              name: openshift-install
+              key: console-url
+
+        - name: GITHUBTOKEN
+          valueFrom:
+            secretKeyRef:
+              name: openshift-install
+              key: github-token
+
+      image: registry.access.redhat.com/ubi8/ubi:latest
+      script: |
+        #!/usr/bin/env bash
+        set -eu
+
+        # Fail if the PR status is not opened, we may handle other cases like
+        # /recheck and stuff but let's wait for a more modern triggers version
+        # first
+        if [[ $(inputs.params.PULLREQ_ACTION) != 'open' ]];then
+            exit 1
+        fi
+
+        statusurl="https://api.github.com/repos/$(inputs.params.PULLREQ_REPO)/statuses/$(inputs.params.PULLREQ_SHA)"
+        #follow_url="${CONSOLE_URL}/k8s/ns/${NS}/tekton.dev~v1alpha1~PipelineRun/${PR}" # new
+        follow_url="${CONSOLE_URL}/k8s/ns/${NS}/pipelineruns/${PR}" # old
+
+        curl -f -s -o/dev/null -H "Content-Type: application/json" -H "Authorization: Bearer ${GITHUBTOKEN}" -X POST ${statusurl} -d "
+        {
+        \"state\": \"pending\",
+        \"target_url\": \"${follow_url}\",
+        \"description\": \"The build has started!\",
+        \"context\": \"continuous-integration/openshift-pipelines-nightly\"
+        }"
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: finish-comment-on-pr
+  description: |
+    This task will set the CI as stopped and add a link to the collectlogs url.
+spec:
+  inputs:
+    params:
+      - name: PULLREQ_REPO
+      - name: PULLREQ_SHA
+  steps:
+    - name: comment-last
+      env:
+        - name: PR
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['tekton.dev/pipelineRun']
+
+        - name: GITHUBTOKEN
+          valueFrom:
+            secretKeyRef:
+              name: openshift-install
+              key: github-token
+
+      image: registry.access.redhat.com/ubi8/ubi
+      script: |
+        #!/usr/bin/env bash
+        set -eu
+
+        # TODO make the URL a setting
+        collectlogurl="https://collectlogs-ci-openshift-pipelines.apps.devint.openshiftknativedemo.org/log/${PR}"
+        statusurl="https://api.github.com/repos/$(inputs.params.PULLREQ_REPO)/statuses/$(inputs.params.PULLREQ_SHA)"
+        curl -f -s -o/dev/null -H "Content-Type: application/json" -H "Authorization: Bearer ${GITHUBTOKEN}" -X POST ${statusurl} -d "
+        {
+        \"state\": \"success\",
+        \"target_url\": \"${collectlogurl}\",
+        \"description\": \"CI Has finished!\",
+        \"context\": \"continuous-integration/openshift-pipelines-nightly\"
+        }"
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: openshift-pipeline-ci-triggertemplate
+spec:
+  params:
+    - name: pullreq_repo
+      description: The git repository url
+
+    - name: pullreq_sha
+      description: The git repository SHA
+
+    - name: pullreq_action
+      description: What type of action
+
+    - name: namespace
+      description: The namespace to create the resources
+
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1alpha1
+      kind: PipelineRun
+      metadata:
+        labels:
+          generated: openshift-pipeline-ci
+        name: openshift-pipeline-ci-run-$(uid)
+        namespace: $(params.namespace)
+      spec:
+        timeout: "3h"
+        serviceAccountName: builder   # TODO
+        pipelineRef:
+          name: openshift-pipeline-ci
+
+        params:
+          - name: UPLOADER_HOST
+            value: https://osinstall.chmouel.com  # TODO
+          - name: IMAGE_NAME
+            value: quay.io/openshift-pipeline/ci:bootstrap  # TODO
+          - name: CLUSTER_NAME
+            value: openshift-pipelines-install
+          - name: PULLREQ_REPO
+            value: $(params.pullreq_repo)
+          - name: PULLREQ_SHA
+            value: $(params.pullreq_sha)
+          - name: PULLREQ_ACTION
+            value: $(params.pullreq_action)
+        resources:
+          - name: plumbing-git
+            resourceRef:
+              name: plumbing-git
+          - name: bootstrap-image
+            resourceRef:
+              name: bootstrap-image
+          - name: tektoncd-pipeline-git
+            resourceRef:
+              name: tektoncd-pipeline-git
+---
+apiVersion: tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: openshift-pipeline-ci-pipelinebinding
+spec:
+  params:
+    - name: namespace
+      value: ci-openshift-pipelines  # TODO
+    - name: pullreq_repo
+      value: $(body.repository.full_name)
+    - name: pullreq_sha
+      value: $(body.pull_request.head.sha)
+    - name: pullreq_action
+      value: $(body.pull_request.state)
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: openshift-pipeline-ci
+spec:
+  serviceAccountName: openshift-pipeline-ci-triggers-sa
+  triggers:
+  - name: openshift-pipeline-ci-pipelinebindings
+    binding:
+      name: openshift-pipeline-ci-pipelinebinding
+    template:
+      name: openshift-pipeline-ci-triggertemplate
+
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: webhook
+spec:
+  to:
+    kind: Service
+    name: el-openshift-pipeline-ci
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: openshift-pipeline-ci-triggers-role
+rules:
+- apiGroups: ["tekton.dev"]
+  resources: ["eventlisteners", "triggerbindings", "triggertemplates", "tasks", "taskruns"]
+  verbs: ["get"]
+- apiGroups: [""]
+  resources: ["configmaps", "services"]
+  verbs: ["get", "list", "watch", "delete", "create"]
+- apiGroups: ["extensions"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch", "delete", "create"]
+- apiGroups: ["route.openshift.io"]
+  resources: ["routes"]
+  verbs: ["get", "list", "watch", "delete", "create", "patch"]
+- apiGroups: ["tekton.dev"]
+  resources: ["pipelineruns", "pipelineresources", "taskruns"]
+  verbs: ["create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: openshift-pipeline-ci-triggers-binding
+subjects:
+- kind: ServiceAccount
+  name: openshift-pipeline-ci-triggers-sa
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: openshift-pipeline-ci-triggers-role
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openshift-pipeline-ci-triggers-sa

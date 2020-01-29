@@ -64,6 +64,8 @@ config() {
     echo -e "------ \e[96mSettings openshift-install secret\e[0m"
     ${K} delete secret openshift-install 2>/dev/null >/dev/null || true
     ${K} create secret generic openshift-install \
+		  --from-literal="console-url=${CONSOLE_URL}" \
+		  --from-literal="github-token=${GITHUB_TOKEN}" \
           --from-literal="aws-access-key-id=${AWS_SECRET_KEY}" \
           --from-literal="aws-secret-access-key=${AWS_ACCESS_KEY}" \
           --from-literal="uploader-username=${UPLOADER_USERNAME}" \
