@@ -132,13 +132,13 @@ spec:
         namespace: $(params.namespace)
       spec:
         timeout: "3h"
-        serviceAccountName: builder   # TODO
+        serviceAccountName: %SERVICE_ACCOUNT%
         pipelineRef:
           name: openshift-pipeline-ci
 
         params:
           - name: UPLOADER_HOST
-            value: https://osinstall.chmouel.com  # TODO
+            value: %UPLOADER_HOST%  # TODO
           - name: IMAGE_NAME
             value: quay.io/openshift-pipeline/ci:bootstrap  # TODO
           - name: CLUSTER_NAME
