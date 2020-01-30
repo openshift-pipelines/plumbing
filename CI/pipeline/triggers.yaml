@@ -139,6 +139,21 @@ spec:
         \"context\": \"continuous-integration/openshift-pipelines-nightly\"
         }"
 
+        GIF_KEYWORDS=happy
+        set +e
+        i=0
+        while true;do
+            randomgif=$(curl -s -L "https://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&q=${GIF_KEYWORDS}&rating=g&limit=100"|python -c "import json, random, sys;j = json.loads(sys.stdin.read());print(j['data'][random.randint(0,99)]['images']['fixed_height_downsampled']['url'])")
+            [[ -n ${randomgif} ]] && break
+            [[ $i == 9 ]] && {
+                randomgif="https://i.giphy.com/media/hOzfvZynn9AK4/200_d.gif"
+                break
+            }
+            (( i+=1 ))
+            sleep 1
+        done
+        set -e
+
         echo '$(inputs.params.PULLREQ_JSON)'|tr -d '\n' | /usr/libexec/platform-python -c "
         import http.client
         import json
@@ -148,7 +163,7 @@ spec:
             jeez[\"number\"])
 
         conn = http.client.HTTPSConnection(\"api.github.com\")
-        data = {\"body\": \"<b>OpenShift Pipelines CI</b> has successfully run :rainbow: :yum: :dancer: :100:\n* CI logs is available here: ${collectlogurl}\n* release.yaml is available here: https://osinstall.chmouel.com/release/pipeline/nightly.yaml\"}
+        data = {\"body\": \"<b>OpenShift Pipelines CI</b> has successfully run :rainbow: :yum: :dancer: :100:\n* CI logs is available here: ${collectlogurl}\n* release.yaml is available here: https://osinstall.chmouel.com/release/pipeline/nightly.yaml\n![happy gif are the best gif](${randomgif})\"}
         r = conn.request(
             \"POST\",
             commenturl,
