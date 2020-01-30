@@ -7,7 +7,7 @@ set -eu
 # Settings you are probably not going to change
 #
 # Catalog tasks to install
-CATALOG_TASKS=""
+CATALOG_TASKS="buildah/buildah"
 
 # Catalog branch where to install our remote tasks
 CATALOG_BRANCH=master
@@ -40,7 +40,7 @@ install_catalog_tasks() {
     echo -e "------ \e[96mInstalling catalog tasks\e[0m"
     for task in ${CATALOG_TASKS};do
         curl -Ls -f https://raw.githubusercontent.com/tektoncd/catalog/${CATALOG_BRANCH}/${task}.yaml | \
-            ${K} apply -f- 
+            ${K} apply -f-
     done
 }
 
@@ -73,7 +73,7 @@ config() {
           --from-file=public-ssh-key="${PUBLIC_SSH_KEY}" \
           --from-file=registry-token="${OPENSHIFT_INSTALL_REGISTRY_TOKEN}" \
           --from-file=upload-pubring.gpg="${DEVELOPPER_PUBRING}"
-          
+
     echo -e "------ \e[96mConfiguring SA ${SERVICE_ACCOUNT} with your quay registry config\e[0m"
     ${K} delete secret quay-reg-cred 2>/dev/null >/dev/null || true
     ${K} create secret generic quay-reg-cred \
@@ -106,12 +106,12 @@ install_pipeline() {
     echo -e "------ \e[96mCreating pipeline\e[0m"
 	kubectl delete -f <(config_params ./pipeline/ci.yaml) \
             -f <(config_params ./pipeline/triggers.yaml) 2>/dev/null || true
-	kubectl create -f <(config_params ./pipeline/ci.yaml ./pipeline/triggers.yaml) 
+	kubectl create -f <(config_params ./pipeline/ci.yaml ./pipeline/triggers.yaml)
     kubectl delete -f ./pipeline/routes.yaml 2>/dev/null || true
     kubectl create --validate=false -f ./pipeline/routes.yaml
 }
 
-main() {    
+main() {
     config
 	install
 	install_pipeline
