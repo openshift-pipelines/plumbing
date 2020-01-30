@@ -148,7 +148,7 @@ spec:
             jeez[\"number\"])
 
         conn = http.client.HTTPSConnection(\"api.github.com\")
-        data = {\"body\": \"<b>OpenShift CI</b> has successfully run :rainbow: :yum: :dancer: :100:\n* CI logs is available here: ${collectlogurl}\n* release.yaml is available here: https://osinstall.chmouel.com/release/pipeline/nightly.yaml\"}
+        data = {\"body\": \"<b>OpenShift Pipelines CI</b> has successfully run :rainbow: :yum: :dancer: :100:\n* CI logs is available here: ${collectlogurl}\n* release.yaml is available here: https://osinstall.chmouel.com/release/pipeline/nightly.yaml\"}
         r = conn.request(
             \"POST\",
             commenturl,
