@@ -94,7 +94,7 @@ config_params() {
     if [[ -d $1 ]];then
         files=(${1}/*.yaml)
     else
-        files=($1)
+        files=($@)
     fi
 
     sed -e "s\\%SERVICE_ACCOUNT%\\${SERVICE_ACCOUNT}\\" \
@@ -107,8 +107,8 @@ install_pipeline() {
 	kubectl delete -f <(config_params ./pipeline/ci.yaml) \
             -f <(config_params ./pipeline/triggers.yaml) 2>/dev/null || true
 	kubectl create -f <(config_params ./pipeline/ci.yaml ./pipeline/triggers.yaml) 
-    echo -e "------ \e[96mFollow progress with: \e[0m"
-    echo "tkn pipeline logs openshift-pipeline-ci -f -n ${TARGET_NAMESPACE}"
+    kubectl delete -f ./pipeline/routes.yaml 2>/dev/null || true
+    kubectl create --validate=false -f ./pipeline/routes.yaml
 }
 
 main() {    

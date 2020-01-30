@@ -9,9 +9,7 @@ spec:
     - name: UPLOADER_HOST
     - name: IMAGE_NAME
     - name: CLUSTER_NAME
-    - name: PULLREQ_REPO
-    - name: PULLREQ_SHA
-    - name: PULLREQ_ACTION
+    - name: PULLREQ_JSON
 
   resources:
     - name: plumbing-git
@@ -24,21 +22,25 @@ spec:
       type: image
 
   tasks:
-  - name: start-comment-on-pr
+  - name: pr-check-run
     taskRef:
-      name: start-comment-on-pr
+      name: pr-check-run
     params:
-      - name: PULLREQ_REPO
-        value: $(params.PULLREQ_REPO)
-      - name: PULLREQ_SHA
-        value: $(params.PULLREQ_SHA)
-      - name: PULLREQ_ACTION
-        value: $(params.PULLREQ_ACTION)
+      - name: PULLREQ_JSON
+        value: $(params.PULLREQ_JSON)
+
+  - name: pr-set-status-pending
+    taskRef:
+      name: pr-set-status-pending
+    runAfter: [pr-check-run]
+    params:
+      - name: PULLREQ_JSON
+        value: $(params.PULLREQ_JSON)
 
   - name: build-bootstrap
     taskRef:
       name: buildah
-    runAfter: [start-comment-on-pr]
+    runAfter: [pr-check-run]
     resources:
       inputs:
         - name: source
@@ -140,12 +142,10 @@ spec:
       - name: UPLOADER_HOST
         value: $(params.UPLOADER_HOST)
 
-  - name: finish-comment-on-pr
+  - name: pr-set-status-and-comment
     taskRef:
-      name: finish-comment-on-pr
+      name: pr-set-status-and-comment
     runAfter: [delete-cluster]
     params:
-      - name: PULLREQ_REPO
-        value: $(params.PULLREQ_REPO)
-      - name: PULLREQ_SHA
-        value: $(params.PULLREQ_SHA)
+      - name: PULLREQ_JSON
+        value: $(params.PULLREQ_JSON)

@@ -2,18 +2,47 @@
 apiVersion: tekton.dev/v1alpha1
 kind: Task
 metadata:
-  name: start-comment-on-pr
+  name: pr-check-run
+  description: |
+    This task will check if we really want to run the job according to the PR
+    We want to do that in triggers but it's not there yet (or at least the
+    version on devint).
+spec:
+  inputs:
+    params:
+      - name: PULLREQ_JSON
+  steps:
+    - name: pr-check-run
+      image: registry.access.redhat.com/ubi8/ubi:latest
+      # Should convert everything to Python instead of Shell+Python nightmare
+      script: |
+        #!/usr/bin/env bash
+        set -eu
+        echo '$(inputs.params.PULLREQ_JSON)'|tr -d '\n' | /usr/libexec/platform-python -c '
+        import json
+        import sys
+        jeez = json.loads(sys.stdin.read())
+
+        if jeez["action"] not in ["opened"] or not "pull_request" in jeez:
+          print("State is: \"%s\", not a new pull request. canceling the pipeline....." % (jeez["action"]))
+          sys.exit(1)
+        '
+        echo "=========== PR is good to be tested"
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: pr-set-status-pending
   description: |
     This task will set the CI as running and add a link to the openshift console
     viewer url.
 spec:
   inputs:
     params:
-      - name: PULLREQ_REPO
-      - name: PULLREQ_SHA
-      - name: PULLREQ_ACTION
+      - name: PULLREQ_JSON
   steps:
-    - name: comment-first
+    - name: pr-set-status-pending
       env:
         - name: PR
           valueFrom:
@@ -38,18 +67,20 @@ spec:
               key: github-token
 
       image: registry.access.redhat.com/ubi8/ubi:latest
+      # Should convert everything to Python instead of Shell+Python nightmare
       script: |
         #!/usr/bin/env bash
         set -eu
 
-        # Fail if the PR status is not opened, we may handle other cases like
-        # /recheck and stuff but let's wait for a more modern triggers version
-        # first
-        if [[ $(inputs.params.PULLREQ_ACTION) != 'open' ]];then
-            exit 1
-        fi
+        echo "=========== Setting PR CI status as pending"
 
-        statusurl="https://api.github.com/repos/$(inputs.params.PULLREQ_REPO)/statuses/$(inputs.params.PULLREQ_SHA)"
+        statusurl=$(echo '$(inputs.params.PULLREQ_JSON)'|tr -d '\n' | /usr/libexec/platform-python -c '
+        import json
+        import sys
+        jeez = json.loads(sys.stdin.read())
+        print("https://api.github.com/repos/%s/statuses/%s" % (jeez["repository"]["full_name"],
+            jeez["pull_request"]["head"]["sha"]))
+        ')
         #follow_url="${CONSOLE_URL}/k8s/ns/${NS}/tekton.dev~v1alpha1~PipelineRun/${PR}" # new
         follow_url="${CONSOLE_URL}/k8s/ns/${NS}/pipelineruns/${PR}" # old
 
@@ -65,16 +96,15 @@ spec:
 apiVersion: tekton.dev/v1alpha1
 kind: Task
 metadata:
-  name: finish-comment-on-pr
+  name: pr-set-status-and-comment
   description: |
     This task will set the CI as stopped and add a link to the collectlogs url.
 spec:
   inputs:
     params:
-      - name: PULLREQ_REPO
-      - name: PULLREQ_SHA
+      - name: PULLREQ_JSON
   steps:
-    - name: comment-last
+    - name: pr-set-status-and-comment
       env:
         - name: PR
           valueFrom:
@@ -94,7 +124,13 @@ spec:
 
         # TODO make the URL a setting
         collectlogurl="https://collectlogs-ci-openshift-pipelines.apps.devint.openshiftknativedemo.org/log/${PR}"
-        statusurl="https://api.github.com/repos/$(inputs.params.PULLREQ_REPO)/statuses/$(inputs.params.PULLREQ_SHA)"
+        statusurl=$(echo '$(inputs.params.PULLREQ_JSON)'|tr -d '\n' | /usr/libexec/platform-python -c '
+        import json
+        import sys
+        jeez = json.loads(sys.stdin.read())
+        print("https://api.github.com/repos/%s/statuses/%s" % (jeez["repository"]["full_name"],
+            jeez["pull_request"]["head"]["sha"]))
+        ')
         curl -f -s -o/dev/null -H "Content-Type: application/json" -H "Authorization: Bearer ${GITHUBTOKEN}" -X POST ${statusurl} -d "
         {
         \"state\": \"success\",
@@ -103,6 +139,50 @@ spec:
         \"context\": \"continuous-integration/openshift-pipelines-nightly\"
         }"
 
+        echo '$(inputs.params.PULLREQ_JSON)'|tr -d '\n' | /usr/libexec/platform-python -c "
+        import http.client
+        import json
+        import sys
+        jeez = json.loads(sys.stdin.read())
+        commenturl=\"/repos/%s/issues/%d/comments\" % (jeez[\"repository\"][\"full_name\"],
+            jeez[\"number\"])
+
+        conn = http.client.HTTPSConnection(\"api.github.com\")
+        data = {\"body\": \"<b>OpenShift CI</b> has successfully run :rainbow: :yum: :dancer: :100:\n* CI logs available here: ${collectlogurl}\n* release.yaml is available here: https://osinstall.chmouel.com/release/pipeline/nightly.yaml\"}
+        r = conn.request(
+            \"POST\",
+            commenturl,
+            body=json.dumps(data),
+            headers={
+                \"User-Agent\": \"OpenShift CI Pipeline Commenter\",
+                \"Authorization\": \"Bearer ${GITHUBTOKEN}\"
+            })
+        r1 = conn.getresponse()
+        print(r1.read())"
+
+        echo "=========== Closing PR"
+
+        echo '$(inputs.params.PULLREQ_JSON)'|tr -d '\n' | /usr/libexec/platform-python -c "
+        import http.client
+        import json
+        import sys
+        jeez = json.loads(sys.stdin.read())
+        commenturl=\"/repos/%s/issues/%d\" % (jeez[\"repository\"][\"full_name\"],
+            jeez[\"number\"])
+
+        data = {\"state\": \"closed\"}
+        conn = http.client.HTTPSConnection(\"api.github.com\")
+        r = conn.request(
+            \"PATCH\",
+            commenturl,
+            body=json.dumps(data),
+            headers={
+                \"User-Agent\": \"OpenShift CI Pipeline Commenter\",
+                \"Authorization\": \"Bearer ${GITHUBTOKEN}\"
+            })
+        r1 = conn.getresponse()
+        print(r1.read())
+
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: TriggerTemplate
@@ -110,14 +190,8 @@ metadata:
   name: openshift-pipeline-ci-triggertemplate
 spec:
   params:
-    - name: pullreq_repo
-      description: The git repository url
-
-    - name: pullreq_sha
-      description: The git repository SHA
-
-    - name: pullreq_action
-      description: What type of action
+    - name: pullreq_json
+      description: The full JSON
 
     - name: namespace
       description: The namespace to create the resources
@@ -143,12 +217,8 @@ spec:
             value: quay.io/openshift-pipeline/ci:bootstrap  # TODO
           - name: CLUSTER_NAME
             value: openshift-pipelines-install
-          - name: PULLREQ_REPO
-            value: $(params.pullreq_repo)
-          - name: PULLREQ_SHA
-            value: $(params.pullreq_sha)
-          - name: PULLREQ_ACTION
-            value: $(params.pullreq_action)
+          - name: PULLREQ_JSON
+            value: $(params.pullreq_json)
         resources:
           - name: plumbing-git
             resourceRef:
@@ -168,12 +238,8 @@ spec:
   params:
     - name: namespace
       value: ci-openshift-pipelines  # TODO
-    - name: pullreq_repo
-      value: $(body.repository.full_name)
-    - name: pullreq_sha
-      value: $(body.pull_request.head.sha)
-    - name: pullreq_action
-      value: $(body.pull_request.state)
+    - name: pullreq_json
+      value: $(body)
 
 ---
 apiVersion: tekton.dev/v1alpha1
@@ -188,19 +254,6 @@ spec:
       name: openshift-pipeline-ci-pipelinebinding
     template:
       name: openshift-pipeline-ci-triggertemplate
-
----
-apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-  name: webhook
-spec:
-  to:
-    kind: Service
-    name: el-openshift-pipeline-ci
-  tls:
-    insecureEdgeTerminationPolicy: Redirect
-    termination: edge
 
 ---
 kind: Role
