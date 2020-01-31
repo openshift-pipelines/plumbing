@@ -116,6 +116,7 @@ metadata:
   name: pr-set-status-and-comment
   description: |
     This task will set the CI as stopped and add a link to the collectlogs url.
+    It will close the task at the end too (probably can be splitted).
 spec:
   inputs:
     params:
