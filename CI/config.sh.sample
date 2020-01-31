@@ -29,7 +29,7 @@ DEVELOPPER_PUBRING=""
 # A docker config.json with a token to upload to the openshift-pipeline
 # repository
 # Specify a filename not the content of the file
-QUAY_REGISTRY_CONFIG="" 
+QUAY_REGISTRY_CONFIG=""
 
 # Add a GitHub token which would post back on GitHub the status of the PR when
 # using in triggers pr mode
@@ -38,6 +38,9 @@ GITHUB_TOKEN=""
 # WebConsole URL sometime you may only need the oc get route things but if you
 # don't have the rights then you need to specify it directly
 CONSOLE_URL="https://$(oc get route -n openshift-console console -o jsonpath='{.spec.host}') "
+
+# Slack Webhook URL, The webhook URL where to send slack notifications
+SLACK_WEBHOOK_URL=""
 
 # Local Variables:
 # mode: shell-script

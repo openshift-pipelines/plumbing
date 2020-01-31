@@ -66,6 +66,7 @@ config() {
     ${K} create secret generic openshift-install \
 		  --from-literal="console-url=${CONSOLE_URL}" \
 		  --from-literal="github-token=${GITHUB_TOKEN}" \
+		  --from-literal="slack-webhook-url=${SLACK_WEBHOOK_URL}" \
           --from-literal="aws-access-key-id=${AWS_SECRET_KEY}" \
           --from-literal="aws-secret-access-key=${AWS_ACCESS_KEY}" \
           --from-literal="uploader-username=${UPLOADER_USERNAME}" \
