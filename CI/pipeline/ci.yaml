@@ -149,3 +149,11 @@ spec:
     params:
       - name: PULLREQ_JSON
         value: $(params.PULLREQ_JSON)
+
+  - name: send-slack-message
+    taskRef:
+      name: send-slack-message
+    runAfter: [delete-cluster]
+    params:
+      - name: PULLREQ_JSON
+        value: $(params.PULLREQ_JSON)

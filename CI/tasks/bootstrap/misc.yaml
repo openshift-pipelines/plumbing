@@ -179,7 +179,7 @@ spec:
             print(resp.read())
         else:
             print("GIthub PR #" + os.environ["PR"] +
-                  " status has been set as pending!")
+                  " status has been set as successfull!")
 
         GIF_KEYWORDS = "happy"
         conn = http.client.HTTPSConnection("api.giphy.com")
@@ -256,7 +256,7 @@ spec:
     params:
       - name: PULLREQ_JSON
   steps:
-    - name: pr-set-status-and-comment
+    - name: send-slack-message
       image: registry.access.redhat.com/ubi8/ubi:latest
       env:
         - name: PR
@@ -301,15 +301,13 @@ spec:
             "NS"] + "/pipelineruns/" + os.environ["PR"]
         collectlogs_url = COLLECTLOG_BASE + "/log/" + os.environ["PR"]
         image_url = 'https://www.inovex.de/blog/wp-content/uploads/2019/07/tekton-pipelines.png'
-        pullreq_number = os.path.basename(pullreq_url)
-        subject = f"OpenShift Pipeline has run succesfully from PR " \
-            f"[#{pullreq_number}]({pullreq_url}) " \
+        subject = f"OpenShift Pipelines CI has run succesfully on {pullreq_url} " \
             ":pipelinedance: :dancing-penguin: :hi-cat:"
         text = f"""
 
 
         • You can watch the logs on the web console: {webconsole_url}
-        • Or inspect it with collectlogs: {collectlogs_url}
+        • Or you can inspect it with collectlogs: {collectlogs_url}
 
         """
 
