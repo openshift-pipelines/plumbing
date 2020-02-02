@@ -49,13 +49,12 @@ spec:
       #!/usr/bin/env bash
       set -eu
 
-      # We are trying to delete the DNS record for the target install.
-      # Explaination:
+      # Cleanup route53 records
       # After the 'reaper' has reaped our openshift install in the aws account, it
       # forget to delete some A records, so the reinstall fails :((
       # let's be helpful and do it for the reaper ASAP....
-#      python $(inputs.resources.plumbing-git.path)/CI/misc/openshift-install-cleanup-route53.records.py \
-#             -f $(inputs.params.CLUSTER_NAME) || true
+      # python $(inputs.resources.plumbing-git.path)/CI/misc/openshift-install-cleanup-route53.records.py \
+      #   -f $(inputs.params.CLUSTER_NAME) || true
 
       # We now try to get the metadata.json since that would give the
       # information needed for the destroy clsuter command of the installer, if
