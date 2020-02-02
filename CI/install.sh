@@ -63,6 +63,7 @@ config() {
 
     echo -e "------ \e[96mSettings openshift-install secret\e[0m"
     ${K} delete secret openshift-install 2>/dev/null >/dev/null || true
+    # TODO: Convert console-url as params instead?
     ${K} create secret generic openshift-install \
 		  --from-literal="console-url=${CONSOLE_URL}" \
 		  --from-literal="github-token=${GITHUB_TOKEN}" \
@@ -107,7 +108,7 @@ install_pipeline() {
     echo -e "------ \e[96mCreating pipeline\e[0m"
 	kubectl delete -f <(config_params ./pipeline/ci.yaml) \
             -f <(config_params ./pipeline/triggers.yaml) 2>/dev/null || true
-	kubectl create -f <(config_params ./pipeline/ci.yaml ./pipeline/triggers.yaml)
+	kubectl create -f <(config_params ./pipeline/triggers.yaml ./pipeline/ci.yaml)
     kubectl delete -f ./pipeline/routes.yaml 2>/dev/null || true
     kubectl create --validate=false -f ./pipeline/routes.yaml
 }
