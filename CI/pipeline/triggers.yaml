@@ -55,6 +55,8 @@ spec:
       value: ci-openshift-pipelines  # TODO
     - name: pullreq_json
       value: $(body)
+    - name: pullreq_id
+      value: $(body.pull_request)
 
 ---
 apiVersion: tekton.dev/v1alpha1
