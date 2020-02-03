@@ -9,8 +9,9 @@ RUN yum -y install python-boto && yum -y clean all && rm -rf /var/cache/yum
 ADD CI/tasks/bootstrap/image/scripts/openshift-install-download.sh /usr/local/bin/
 ADD CI/tasks/bootstrap/image/scripts/get-github-asset.sh /usr/local/bin/
 
-# Install yq and jq for template manipulation
-RUN curl -s -L -o /usr/local/bin/tkn `/usr/local/bin/get-github-asset.sh tektoncd/cli Linux_x86_64.tar.gz` && \
+# Install tkn tool which is used in e2e-tests
+RUN curl -s -L `/usr/local/bin/get-github-asset.sh tektoncd/cli Linux_x86_64.tar.gz` | \
+     tar xzf - -C /usr/local/bin/ --wildcards 'tkn' && \
         chmod +x /usr/local/bin/tkn
 
 # Download openshift installer
