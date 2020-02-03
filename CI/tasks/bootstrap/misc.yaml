@@ -220,7 +220,7 @@ spec:
                 "User-Agent": "OpenShift CI Pipeline Commenter",
                 "Authorization": "Bearer " + os.environ["GITHUBTOKEN"],
             })
-        r1 = conn.getresponse()
+        resp = conn.getresponse()
         if not str(resp.status).startswith("2"):
             print("Error: %d" % (resp.status))
             print(resp.read())
@@ -237,7 +237,7 @@ spec:
                 "User-Agent": "OpenShift CI Pipeline Commenter",
                 "Authorization": "Bearer " + os.environ["GITHUBTOKEN"],
             })
-        r1 = conn.getresponse()
+        resp = conn.getresponse()
         if not str(resp.status).startswith("2"):
             print("Error: %d" % (resp.status))
             print(resp.read())
