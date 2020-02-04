@@ -5,8 +5,11 @@ metadata:
   name: openshift-pipeline-ci-triggertemplate
 spec:
   params:
-    - name: pullreq_json
-      description: The full JSON
+    - name: pullreq_action
+    - name: pullreq_number
+    - name: pullreq_repo_full_name
+    - name: pullreq_sha
+    - name: pullreq_html_url
 
     - name: namespace
       description: The namespace to create the resources
@@ -32,8 +35,17 @@ spec:
             value: quay.io/openshift-pipeline/ci:bootstrap  # TODO
           - name: CLUSTER_NAME
             value: openshift-pipelines-install
-          - name: PULLREQ_JSON
-            value: $(params.pullreq_json)
+          - name: pullreq_action
+            value: $(params.pullreq_action)
+          - name: pullreq_number
+            value: $(params.pullreq_number)
+          - name: pullreq_repo_full_name
+            value: $(params.pullreq_repo_full_name)
+          - name: pullreq_sha
+            value: $(params.pullreq_sha)
+          - name: pullreq_html_url
+            value: $(params.pullreq_html_url)
+
         resources:
           - name: plumbing-git
             resourceRef:
@@ -53,10 +65,16 @@ spec:
   params:
     - name: namespace
       value: ci-openshift-pipelines  # TODO
-    - name: pullreq_json
-      value: $(body)
-    - name: pullreq_id
-      value: $(body.pull_request)
+    - name: pullreq_action
+      value: $(body.action)
+    - name: pullreq_number
+      value: $(body.number)
+    - name: pullreq_repo_full_name
+      value: $(body.repository.full_name)
+    - name: pullreq_sha
+      value: $(body.pull_request.head.sha)
+    - name: pullreq_html_url
+      value: $(body.pull_request.html_url)
 
 ---
 apiVersion: tekton.dev/v1alpha1

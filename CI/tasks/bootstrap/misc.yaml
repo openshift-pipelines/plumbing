@@ -10,27 +10,20 @@ metadata:
 spec:
   inputs:
     params:
-      - name: PULLREQ_JSON
+      - name: pullreq_number
+      - name: pullreq_action
   steps:
     - name: pr-check-run
       image: registry.access.redhat.com/ubi8/ubi:latest
       script: |
        #!/usr/libexec/platform-python
-       import json
-       import os
        import sys
 
-       preq = """$(inputs.params.PULLREQ_JSON)"""
-       if not preq:
-           print("pullreq_json is not found")
+       if "$(inputs.params.pullreq_action)" not in ["opened"]:
+           print(f"State is: '$(inputs.params.pullreq_action)']', "
+                 "not a new pull request. canceling the pipeline.....")
            sys.exit(1)
-       jeez = json.loads(preq.replace("\n", " "))
-       if jeez["action"] not in ["opened"] or "pull_request" not in jeez:
-           print(
-               "State is: '%s', not a new pull request. canceling the pipeline....."
-               % (jeez["action"]))
-           sys.exit(1)
-       print("PR is good to be tested.")
+       print("PR #$(inputs.params.pullreq_number) is good to be tested.")
 
 ---
 apiVersion: tekton.dev/v1alpha1
@@ -43,7 +36,9 @@ metadata:
 spec:
   inputs:
     params:
-      - name: PULLREQ_JSON
+      - name: pullreq_repo_full_name
+      - name: pullreq_sha
+      - name: pullreq_number
   steps:
     - name: pr-set-status-pending
       env:
@@ -77,12 +72,10 @@ spec:
         import os
         import http.client
 
-        preq = """$(inputs.params.PULLREQ_JSON)"""
-        jeez = json.loads(preq.replace("\n", " "))
+        status_url = "/repos/$(inputs.params.pullreq_repo_full_name)" \
+                     "/statuses/$(inputs.params.pullreq_sha)"
 
-        status_url = "/repos/%s/statuses/%s" % (jeez["repository"]["full_name"],
-                                                jeez["pull_request"]["head"]["sha"])
-        # OpenShift 4.2 format, 4.3 will change
+        # TODO: OpenShift 4.2 format, 4.3 will have a different format
         follow_url = os.environ["CONSOLE_URL"] + "/k8s/ns/" + os.environ[
             "NS"] + "/pipelineruns/" + os.environ["PR"]
 
@@ -107,7 +100,7 @@ spec:
             print("Error: %d" % (resp.status))
             print(resp.read())
         else:
-          print("GIthub PR #" + os.environ["PR"] + " Status has been set")
+          print("GitHub PR #$(inputs.params.pullreq_number) Status has been set")
 
 ---
 apiVersion: tekton.dev/v1alpha1
@@ -120,7 +113,9 @@ metadata:
 spec:
   inputs:
     params:
-      - name: PULLREQ_JSON
+      - name: pullreq_repo_full_name
+      - name: pullreq_sha
+      - name: pullreq_number
   steps:
     - name: pr-set-status-and-comment
       env:
@@ -146,13 +141,10 @@ spec:
         COLLECT_LOGURL = 'https://collectlogs-ci-openshift-pipelines.apps.devint.openshiftknativedemo.org/'
         NIGHTLY_RELEASE_YAML = 'https://osinstall.chmouel.com/release/pipeline/nightly.yaml'
 
-        preq = """$(inputs.params.PULLREQ_JSON)"""
-        ojeez = json.loads(preq.replace("\n", " "))
-
-        status_url = "/repos/%s/statuses/%s" % (ojeez["repository"]["full_name"],
-                                                ojeez["pull_request"]["head"]["sha"])
-        comment_url = "/repos/%s/issues/%d" % (ojeez["repository"]["full_name"],
-                                               ojeez["number"])
+        status_url = "/repos/$(inputs.params.pullreq_repo_full_name)" \
+                     "/statuses/$(inputs.params.pullreq_sha)"
+        comment_url = "/repos/$(inputs.params.pullreq_repo_full_name)" \
+                      "/issues/$(inputs.params.pullreq_number)"
 
         # OpenShift 4.2 format, 4.3 will change
         collect_log_url = COLLECT_LOGURL + "/log" + os.environ["PR"]
@@ -178,7 +170,7 @@ spec:
             print("Error: %d" % (resp.status))
             print(resp.read())
         else:
-            print("GIthub PR #" + os.environ["PR"] +
+            print("GitHub PR #" + os.environ["PR"] +
                   " status has been set as successfull!")
 
         GIF_KEYWORDS = "happy"
@@ -196,9 +188,9 @@ spec:
             print("Error: %d" % (resp.status))
             print(resp.read())
 
-        jeez = json.loads(resp.read().decode())
-        gifurl = jeez['data'][random.randint(0, len(
-            jeez['data']))]['images']['fixed_height_downsampled']['url']
+        rndjeez = json.loads(resp.read().decode())
+        gifurl = rndjeez['data'][random.randint(0, len(
+            rndjeez['data']))]['images']['fixed_height_downsampled']['url']
 
         comment_message = f"""
         <b>OpenShift Pipelines CI</b> has successfully run :rainbow: :yum: :dancer: :100:
@@ -225,7 +217,7 @@ spec:
             print("Error: %d" % (resp.status))
             print(resp.read())
         else:
-            print("GIthub PR #" + os.environ["PR"] + " has a new result comment!")
+            print("GitHub PR #" + os.environ["PR"] + " has a new result comment!")
 
         conn = http.client.HTTPSConnection("api.github.com")
         data = {"state": "closed"}
@@ -242,7 +234,7 @@ spec:
             print("Error: %d" % (resp.status))
             print(resp.read())
         else:
-            print("GIthub PR #" + os.environ["PR"] + " has been closed!")
+            print("GitHub PR #$(inputs.params.pullreq_number) has been closed!")
 
 ---
 apiVersion: tekton.dev/v1alpha1
@@ -254,7 +246,7 @@ metadata:
 spec:
   inputs:
     params:
-      - name: PULLREQ_JSON
+      - name: pullreq_html_url
   steps:
     - name: send-slack-message
       image: registry.access.redhat.com/ubi8/ubi:latest
@@ -294,9 +286,7 @@ spec:
 
         COLLECTLOG_BASE = "https://collectlogs-ci-openshift-pipelines.apps.devint.openshiftknativedemo.org"
 
-        preq = """$(inputs.params.PULLREQ_JSON)"""
-        ojeez = json.loads(preq.replace("\n", " "))
-        pullreq_url = ojeez['pull_request']['html_url']
+        pullreq_url = "$(inputs.params.pullreq_html_url)"
         webconsole_url = os.environ["CONSOLE_URL"] + "/k8s/ns/" + os.environ[
             "NS"] + "/pipelineruns/" + os.environ["PR"]
         collectlogs_url = COLLECTLOG_BASE + "/log/" + os.environ["PR"]

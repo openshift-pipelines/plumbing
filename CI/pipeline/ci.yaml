@@ -9,7 +9,11 @@ spec:
     - name: UPLOADER_HOST
     - name: IMAGE_NAME
     - name: CLUSTER_NAME
-    - name: PULLREQ_JSON
+    - name: pullreq_action
+    - name: pullreq_number
+    - name: pullreq_repo_full_name
+    - name: pullreq_sha
+    - name: pullreq_html_url
 
   resources:
     - name: plumbing-git
@@ -26,17 +30,21 @@ spec:
     taskRef:
       name: pr-check-run
     params:
-      - name: PULLREQ_JSON
-        value: $(params.PULLREQ_JSON)
-
+      - name: pullreq_number
+        value: $(params.pullreq_number)
+      - name: pullreq_action
+        value: $(params.pullreq_action)
   - name: pr-set-status-pending
     taskRef:
       name: pr-set-status-pending
     runAfter: [pr-check-run]
     params:
-      - name: PULLREQ_JSON
-        value: $(params.PULLREQ_JSON)
-
+      - name: pullreq_number
+        value: $(params.pullreq_number)
+      - name: pullreq_repo_full_name
+        value: $(params.pullreq_repo_full_name)
+      - name: pullreq_sha
+        value: $(params.pullreq_sha)
   - name: build-bootstrap
     taskRef:
       name: buildah
@@ -147,13 +155,17 @@ spec:
       name: pr-set-status-and-comment
     runAfter: [delete-cluster]
     params:
-      - name: PULLREQ_JSON
-        value: $(params.PULLREQ_JSON)
+      - name: pullreq_number
+        value: $(params.pullreq_number)
+      - name: pullreq_repo_full_name
+        value: $(params.pullreq_repo_full_name)
+      - name: pullreq_sha
+        value: $(params.pullreq_sha)
 
   - name: send-slack-message
     taskRef:
       name: send-slack-message
     runAfter: [delete-cluster]
     params:
-      - name: PULLREQ_JSON
-        value: $(params.PULLREQ_JSON)
+      - name: pullreq_html_url
+        value: $(params.pullreq_html_url)
