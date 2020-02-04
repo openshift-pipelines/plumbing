@@ -20,7 +20,7 @@ spec:
        import sys
 
        if "$(inputs.params.pullreq_action)" not in ["opened"]:
-           print(f"State is: '$(inputs.params.pullreq_action)']', "
+           print(f"State is: '$(inputs.params.pullreq_action)' "
                  "not a new pull request. canceling the pipeline.....")
            sys.exit(1)
        print("PR #$(inputs.params.pullreq_number) is good to be tested.")
