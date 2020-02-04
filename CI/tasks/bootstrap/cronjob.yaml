@@ -5,7 +5,7 @@ metadata:
     name: cron-openshift-ci-nightly
   name: cron-openshift-ci-nightly-cron
 spec:
-  schedule: "0 2 * * *"
+  schedule: "0 3 * * *"
   concurrencyPolicy: "Forbid"
   startingDeadlineSeconds: 200
   suspend: false
@@ -21,6 +21,15 @@ spec:
           containers:
           - name: launch-nightly
             image: quay.io/chmouel/hub-git
+            env:
+            - name: GITHUB_USER
+              # TODO: configure
+              value: chmouel
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: github-token
+                  name: openshift-install
             command: ["/bin/bash"]
-            args: ["-c", "git clone --depth=1 https://github.com/chmouel/scratchpad /tmp/scratchpad && cd /tmp/scratchpad && git config user.email chmouzies@chmouel.com && git config user.name chmouzies && ./new-pull-request.sh"]
+            args: ["-c", "git clone --depth=1 https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/chmouel/scratchpad /tmp/scratchpad && cd /tmp/scratchpad && git config user.email thecat@openshift.dev && git config user.name catseye && ./new-pull-request.sh"]
           restartPolicy: OnFailure
