@@ -2,9 +2,7 @@
 # docker build -t quay.io/chmouel/hub-git -f Dockerfile.cron . && docker push quay.io/chmouel/hub-git
 FROM registry.access.redhat.com/ubi8/ubi:latest
 
-## TODO: Reenable
-# RUN yum -y update && yum -y install python-boto && yum -y clean all && rm -rf /var/cache/yum
-RUN yum -y install git && yum -y clean all && rm -rf /var/cache/yum
+RUN yum -y update && yum -y install git && yum -y clean all && rm -rf /var/cache/yum
 
 ADD scripts/get-github-asset.sh /usr/local/bin/
 
