@@ -2,7 +2,7 @@
 # Shortcut to run the build bootstrap, just for giggles
 set -eu
 
-source $(git rev-parse --show-toplevel)/config.sh
+source $(git rev-parse --show-toplevel)/CI/config.sh
 
 git push
 
@@ -12,7 +12,7 @@ kubectl delete -f $(git rev-parse --show-toplevel)/CI/tasks/bootstrap/build-tekt
 kubectl create -f $(git rev-parse --show-toplevel)/CI/tasks/bootstrap/build-tektoncd-pipeline.yaml
 
 tkn task start build-tektoncd-pipeline-and-push --showlog \
-    --param UPLOADER_HOST=$(grep host ~/.uploader.cfg|sed 's/host=//') \
+    --param UPLOADER_HOST=${UPLOADER_HOST} \
 	-i plumbing-git=plumbing-git \
     -i tektoncd-pipeline-git=tektoncd-pipeline-git \
     --serviceaccount ${SERVICE_ACCOUNT}
