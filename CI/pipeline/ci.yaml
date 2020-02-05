@@ -22,9 +22,6 @@ spec:
     - name: tektoncd-pipeline-git
       type: git
 
-    - name: bootstrap-image
-      type: image
-
   tasks:
   - name: pr-check-run
     taskRef:
@@ -45,25 +42,11 @@ spec:
         value: $(params.pullreq_repo_full_name)
       - name: pullreq_sha
         value: $(params.pullreq_sha)
-  - name: build-bootstrap
-    taskRef:
-      name: buildah
-    runAfter: [pr-check-run]
-    resources:
-      inputs:
-        - name: source
-          resource: plumbing-git
-      outputs:
-        - name: image
-          resource: bootstrap-image
-    params:
-      - name: DOCKERFILE
-        value: CI/tasks/bootstrap/image/Dockerfile
 
   - name: uninstall-openshift4-previous
     taskRef:
       name: openshift4-uninstall
-    runAfter: [build-bootstrap]
+    runAfter: [pr-check-run]
     resources:
       inputs:
         - name: plumbing-git
