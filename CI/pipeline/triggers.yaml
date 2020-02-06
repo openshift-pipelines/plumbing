@@ -82,8 +82,11 @@ spec:
   serviceAccountName: openshift-pipeline-ci-triggers-sa
   triggers:
   - name: openshift-pipeline-ci-pipelinebindings
-    binding:
-      name: openshift-pipeline-ci-pipelinebinding
+    interceptors:
+    - cel:
+        filter: "body.action=='opened' && header.match('X-GitHub-Event', 'pull_request')"
+    bindings:
+    - name: openshift-pipeline-ci-pipelinebinding
     template:
       name: openshift-pipeline-ci-triggertemplate
 

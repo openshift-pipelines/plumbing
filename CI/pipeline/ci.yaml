@@ -23,18 +23,9 @@ spec:
       type: git
 
   tasks:
-  - name: pr-check-run
-    taskRef:
-      name: pr-check-run
-    params:
-      - name: pullreq_number
-        value: $(params.pullreq_number)
-      - name: pullreq_action
-        value: $(params.pullreq_action)
   - name: pr-set-status-pending
     taskRef:
       name: pr-set-status-pending
-    runAfter: [pr-check-run]
     params:
       - name: pullreq_number
         value: $(params.pullreq_number)
@@ -46,7 +37,6 @@ spec:
   - name: uninstall-openshift4-previous
     taskRef:
       name: openshift4-uninstall
-    runAfter: [pr-check-run]
     resources:
       inputs:
         - name: plumbing-git

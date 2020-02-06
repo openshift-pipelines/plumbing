@@ -2,33 +2,6 @@
 apiVersion: tekton.dev/v1alpha1
 kind: Task
 metadata:
-  name: pr-check-run
-  description: |
-    This task will check if we really want to run the job according to the PR
-    We want to do that in triggers but it's not there yet (or at least the
-    version on devint).
-spec:
-  inputs:
-    params:
-      - name: pullreq_number
-      - name: pullreq_action
-  steps:
-    - name: pr-check-run
-      image: registry.access.redhat.com/ubi8/ubi:latest
-      script: |
-       #!/usr/libexec/platform-python
-       import sys
-
-       if "$(inputs.params.pullreq_action)" not in ["opened"]:
-           print(f"State is: '$(inputs.params.pullreq_action)' "
-                 "not a new pull request. canceling the pipeline.....")
-           sys.exit(1)
-       print("PR #$(inputs.params.pullreq_number) is good to be tested.")
-
----
-apiVersion: tekton.dev/v1alpha1
-kind: Task
-metadata:
   name: pr-set-status-pending
   description: |
     This task will set the CI as running and add a link to the openshift console
@@ -189,8 +162,11 @@ spec:
             print(resp.read())
 
         rndjeez = json.loads(resp.read().decode())
-        gifurl = rndjeez['data'][random.randint(0, len(
-            rndjeez['data']))]['images']['fixed_height_downsampled']['url']
+        try:
+            gifurl = rndjeez['data'][random.randint(0, len(
+                rndjeez['data']))]['images']['fixed_height_downsampled']['url']
+        except(IndexError):
+            gifurl = 'https://media1.giphy.com/media/MeIucAjPKoA120R7sN/200_d.gif'
 
         comment_message = f"""
         <b>OpenShift Pipelines CI</b> has successfully run :rainbow: :yum: :dancer: :100:

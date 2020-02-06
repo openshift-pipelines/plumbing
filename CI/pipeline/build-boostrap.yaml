@@ -13,7 +13,6 @@ specs:
   - name: build-bootstrap
     taskRef:
       name: buildah
-    runAfter: [pr-check-run]
     resources:
       inputs:
         - name: source
