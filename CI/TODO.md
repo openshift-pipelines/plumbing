@@ -1,10 +1,7 @@
 # TODOs
 
 ## High (POC)
-* Make sure containers are updated with latest packages (currently disabled for iterations).
 * go over all the TODOs in the code
-* Add buildah to bootstrap and use that so we don't have to install make all the
-  time
 * Specify release.yaml image by digest instead by tags.
 * Create RoleBinding instead of `oc adm policy` thing...
 
@@ -17,6 +14,8 @@
 * Stream logs to the log server. (extend: https://github.com/chmouel/go-simple-uploader/ )
 * Only generate the bootstrap task (the base task for all others) when a change to the repo is made.
 * Move out the large scripts in template to the repository.
+* Add buildah to bootstrap and use that so we don't have to install make all the
+  time
 
 # Maybe
 * Create our own SA, don't use existing....
