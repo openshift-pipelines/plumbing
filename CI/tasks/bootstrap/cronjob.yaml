@@ -23,13 +23,12 @@ spec:
             image: quay.io/chmouel/hub-git
             env:
             - name: GITHUB_USER
-              # TODO: configure
-              value: chmouel
+              value: %GITHUB_USER%
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef:
                   key: github-token
                   name: openshift-install
             command: ["/bin/bash"]
-            args: ["-c", "git clone --depth=1 https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/chmouel/scratchpad /tmp/scratchpad && cd /tmp/scratchpad && git config user.email thecat@openshift.dev && git config user.name catseye && ./new-pull-request.sh"]
+            args: ["-c", "git clone --depth=1 https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/chmouel/scratchpad /tmp/scratchpad && cd /tmp/scratchpad && ./new-pull-request.sh"]
           restartPolicy: OnFailure
