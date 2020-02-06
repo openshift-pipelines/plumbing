@@ -52,7 +52,10 @@ install() {
 	install_catalog_tasks
 
 	echo -e "------ \e[96mInstalling local templates to run bootstrap\e[0m"
-    ${K} apply -f <(config_params resources/) -f <(config_params tasks/bootstrap/) -f <(config_params tasks/components/)
+    ${K} apply -f <(config_params resources/) -f <(config_params tasks/bootstrap/) -f <(config_params tasks/components/) || {
+        cat <(config_params resources/) <(config_params tasks/bootstrap/) <(config_params tasks/components/)
+        exit 1
+    }
 }
 
 config() {
@@ -101,6 +104,7 @@ config_params() {
 
     sed -e "s\\%SERVICE_ACCOUNT%\\${SERVICE_ACCOUNT}\\" \
         -e "s\\%UPLOADER_HOST%\\${UPLOADER_HOST}\\" \
+        -e "s\\%GITHUB_USER%\\${GITHUB_USER}\\" \
         ${files[@]}
 }
 
