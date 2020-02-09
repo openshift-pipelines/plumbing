@@ -10,4 +10,3 @@ spec:
   tls:
     insecureEdgeTerminationPolicy: Redirect
     termination: edge
-

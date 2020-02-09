@@ -1,0 +1,53 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: fail-it
+  description: |
+    This will exit 1 so we can test failures
+spec:
+  steps:
+    - name: exit1
+      image: registry.access.redhat.com/ubi8/ubi-minimal:latest
+      script: "exit 1"
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: openshift-pipeline-ci
+
+spec:
+  params:
+    - name: UPLOADER_HOST
+    - name: IMAGE_NAME
+    - name: CLUSTER_NAME
+    - name: pullreq_action
+    - name: pullreq_number
+    - name: pullreq_repo_full_name
+    - name: pullreq_sha
+    - name: pullreq_html_url
+
+  resources:
+    - name: plumbing-git
+      type: git
+
+    - name: tektoncd-pipeline-git
+      type: git
+
+  tasks:
+  - name: pr-set-status-pending
+    taskRef:
+      name: pr-set-status-pending
+    params:
+      - name: pullreq_number
+        value: $(params.pullreq_number)
+      - name: pullreq_repo_full_name
+        value: $(params.pullreq_repo_full_name)
+      - name: pullreq_sha
+        value: $(params.pullreq_sha)
+
+  - name: fail-it
+    taskRef:
+      name: fail-it
+    runAfter: [pr-set-status-pending]

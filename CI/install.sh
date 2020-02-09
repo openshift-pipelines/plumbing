@@ -45,7 +45,6 @@ install_catalog_tasks() {
 }
 
 install() {
-
 	# We do this here so we can have some custom configuration in there, i.e: installing secret
 	[[ -e ./local.sh ]] && source "./local.sh"
 
@@ -56,6 +55,15 @@ install() {
         cat <(config_params resources/) <(config_params tasks/bootstrap/) <(config_params tasks/components/)
         exit 1
     }
+
+    # Soon enough we will convert all task to  use this script
+    ./misc/make-task.py tasks/bootstrap/templates | kubectl apply -f-
+
+    echo -e "------ \e[96mCreating pipeline and triggers\e[0m"
+	kubectl delete -f <(config_params triggers) -f <(config_params ./pipeline/ci.yaml) 2>/dev/null || true
+	kubectl create -f <(config_params triggers) -f <(config_params ./pipeline/ci.yaml)
+    kubectl delete -f ./triggers/routes.yaml 2>/dev/null || true
+    kubectl create --validate=false -f ./triggers/routes.yaml
 }
 
 config() {
@@ -89,6 +97,12 @@ config() {
         ${K} get sa ${SERVICE_ACCOUNT} -o json | \
             python -c "import json, sys;r = json.loads(sys.stdin.read());r['secrets'].append({'name': 'quay-reg-cred'});print(json.dumps(r))"|${K} apply -f-
     }
+
+    ${K} get deployment collectlogs -oname >/dev/null 2>/dev/null && {
+        TRIGGERS_URL="https://$(${K} get route webhook -o jsonpath='{.spec.host}')"
+        echo -e "------ \e[96mSetting collectlogs to send pr events to webhook service\e[0m"
+        ${K} set env deployment/collectlogs -c operator TRIGGERS_URL="${TRIGGERS_URL}"
+    }
 }
 
 # This takes a a dir or a file and apply environment variable (configs) to it.
@@ -108,19 +122,9 @@ config_params() {
         ${files[@]}
 }
 
-install_pipeline() {
-    echo -e "------ \e[96mCreating pipeline\e[0m"
-	kubectl delete -f <(config_params ./pipeline/ci.yaml) \
-            -f <(config_params ./pipeline/triggers.yaml) 2>/dev/null || true
-	kubectl create -f <(config_params ./pipeline/triggers.yaml ./pipeline/ci.yaml)
-    kubectl delete -f ./pipeline/routes.yaml 2>/dev/null || true
-    kubectl create --validate=false -f ./pipeline/routes.yaml
-}
-
 main() {
     config
 	install
-	install_pipeline
 }
 
 main
