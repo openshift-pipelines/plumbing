@@ -1,0 +1,51 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: send-slack-message
+  description: |
+    This will send a slack status to an URL
+spec:
+  inputs:
+    params:
+      - name: pullreq_params
+        default: "{}"
+      - name: pullreq_conditions
+        default: "{}"
+      - name: pullreq_html_url
+        default: ""
+      - name: pipelinerun_name
+        default: ""
+  steps:
+    - name: send-slack-message
+      image: registry.access.redhat.com/ubi8/ubi:latest
+      env:
+        - name: PR
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['tekton.dev/pipelineRun']
+
+        - name: NS
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+
+        - name: CONSOLE_URL
+          valueFrom:
+            secretKeyRef:
+              name: openshift-install
+              key: console-url
+
+        - name: SLACK_WEBHOOK_URL
+          valueFrom:
+            secretKeyRef:
+              name: openshift-install
+              key: slack-webhook-url
+
+        - name: GITHUBTOKEN
+          valueFrom:
+            secretKeyRef:
+              name: openshift-install
+              key: github-token
+      script: |
+        {{script_file|indent(8)}}

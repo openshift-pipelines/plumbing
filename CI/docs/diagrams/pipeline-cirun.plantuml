@@ -1,0 +1,19 @@
+@startuml
+start
+repeat
+ :Build Binaries;
+ floating note right: Build and Push Pipeline/Trigger Task
+ :Generate Dockerfile for binaries;
+ :Build containers using buildah;
+ :Push containers to quay.io/openshift-pipeline/ci:${IMAGE_NAME};
+ :Generate release-ci.yaml referencing CI;
+ :Upload release-ci.yaml to external web server;
+repeat while (pipeline, triggers finished?) is (no)
+->yes;
+:Deploy ci release.yaml for pipeline and triggers;
+:Run Tests:
+:Repush containers images to quay.io/openshift-pipeline/nightly:${IMAGE_NAME};
+:Generate release-nightly.yaml referencing nightly;
+:Upload release-nightly.yaml to external web server;
+stop
+@enduml

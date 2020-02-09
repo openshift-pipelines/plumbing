@@ -1,0 +1,12 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: plumbing-git
+spec:
+  type: git
+  params:
+  - name: revision
+    value: CI
+  - name: url
+    value: https://github.com/openshift-pipelines/plumbing

@@ -1,0 +1,13 @@
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+
+# Todo: Reenable after POC and merge the two yum run
+RUN microdnf update -y && microdnf install -y git openssh-clients && microdnf \
+    clean all && rm -rf /usr/share/docs /var/cache/yum
+
+ENV HOME=/ko-app PATH=${HOME}:${PATH}
+COPY %%BASE_BIN%% ${HOME}/%%BASE_BIN%%.orig
+COPY uidwrapper ${HOME}/%%BASE_BIN%%
+
+RUN chgrp -R 0 ${HOME} && chmod -R g=u $HOME /etc/passwd
+
+ENTRYPOINT ["/ko-app/%%BASE_BIN%%"]

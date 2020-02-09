@@ -1,0 +1,25 @@
+@startuml
+ :Run Units/Functional Tests;
+
+ fork
+   :Pipeline;
+   :Unit Tests;
+   :Functional Tests;
+ fork again
+   :Triggers;
+   :Unit Tests;
+   :Functional Tests;
+ fork again
+   :CLI;
+   :Unit Tests;
+   :Functional Tests;
+   :Generate nightly container image;
+ fork again
+   :Catalog;
+   :Merge with openshift/pipeline-catalog;
+   :Functional Tests;
+ fork again
+   :Operator;
+   :TODO;
+ endfork
+@enduml

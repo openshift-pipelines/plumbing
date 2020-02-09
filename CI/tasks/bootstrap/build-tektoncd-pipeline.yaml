@@ -1,0 +1,143 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: build-tektoncd-pipeline-and-push
+spec:
+  inputs:
+    resources:
+      - name: plumbing-git
+        type: git
+      - name: tektoncd-pipeline-git
+        type: git
+    params:
+    - name: UPLOADER_HOST
+      description: GO Simple Uploader hostname
+
+    - name: CLUSTER_NAME
+      description: Cluster name
+      default: "openshift-pipelines-install"
+
+  steps:
+  - name: binaries-build-dockerfiles
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    # TODO: change to a parameter since that's probably going to be changed
+    # done passably often and we want to commonalize it for the other projects.
+    image: openshift/origin-release:golang-1.13
+    workingDir: $(inputs.resources.plumbing-git.path)
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      make -C $(inputs.resources.plumbing-git.path)/CI/tasks/bootstrap/build-tektoncd-pipeline \
+        build_binary create_dockerfiles \
+        PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-pipeline-git.path) \
+        OUTPUT_DIR=/workspace/output
+
+  - name: container-buildpush
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    image: quay.io/buildah/stable:v1.11.0
+    workingDir: $(inputs.resources.plumbing-git.path)
+    volumeMounts:
+    - name: varlibcontainers
+      mountPath: /var/lib/containers
+    securityContext:
+      privileged: true
+    script: |
+      #!/usr/bin/env bash
+      set -eu
+      # I wish we didn't need to do that as it slows down the build, we can
+      # probably build our own image but that's more machinery to setup.... (and
+      # that's not bcause i am lazy i promess)
+      sudo dnf -y install make
+
+      make -C $(inputs.resources.plumbing-git.path)/CI/tasks/bootstrap/build-tektoncd-pipeline \
+        container_build container_push \
+        OUTPUT_DIR=/workspace/output \
+        PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-pipeline-git.path) \
+        REGISTRY_URL=quay.io/openshift-pipeline/ci
+
+  - name: generate-release-yaml
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    image: registry.access.redhat.com/ubi8/ubi:latest
+    workingDir: $(inputs.resources.plumbing-git.path)
+    script: |
+      #!/usr/bin/env bash
+      set -e
+
+      #TODO: Commonalize in shell script
+      function upload() {
+        dest="$2"
+        [[ -z ${dest} ]] && dest="CI/$(inputs.params.CLUSTER_NAME)/$(basename ${1})"
+        curl -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+          -F path=${dest} \
+          -F file=@${1} \
+          $(inputs.params.UPLOADER_HOST)/upload
+      }
+
+      source CI/tasks/bootstrap/build-tektoncd-pipeline/resolve-yamls.sh
+
+      generate_pipeline_resources \
+        $(inputs.resources.tektoncd-pipeline-git.path) \
+        /workspace/output/release.yaml \
+        quay.io/openshift-pipeline/ci
+
+      upload /workspace/output/release.yaml
+
+  - name: install-release-yaml
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    image: quay.io/openshift/origin-cli:latest
+    workingDir: $(inputs.resources.plumbing-git.path)
+    script: |
+      #!/usr/bin/env bash
+      set -eu
+      mkdir -p ${HOME}/.kube
+      curl -o ${HOME}/.kube/config \
+           -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+           $(inputs.params.UPLOADER_HOST)/private/CI/$(inputs.params.CLUSTER_NAME)/kubeconfig
+      echo "Installing OpenShift Pipelines"
+      oc delete -f /workspace/output/release.yaml 2>/dev/null || true # In case if we are doing a shortcut install
+      oc create -f /workspace/output/release.yaml
+
+  volumes:
+  - name: varlibcontainers
+    emptyDir: {}

@@ -1,0 +1,144 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: openshift-pipeline-ci
+
+spec:
+  params:
+    - name: UPLOADER_HOST
+    - name: IMAGE_NAME
+    - name: CLUSTER_NAME
+    - name: pullreq_action
+    - name: pullreq_number
+    - name: pullreq_repo_full_name
+    - name: pullreq_sha
+    - name: pullreq_html_url
+
+  resources:
+    - name: plumbing-git
+      type: git
+
+    - name: tektoncd-pipeline-git
+      type: git
+
+  tasks:
+  - name: pr-set-status-pending
+    taskRef:
+      name: pr-set-status-pending
+    params:
+      - name: pullreq_number
+        value: $(params.pullreq_number)
+      - name: pullreq_repo_full_name
+        value: $(params.pullreq_repo_full_name)
+      - name: pullreq_sha
+        value: $(params.pullreq_sha)
+
+  - name: uninstall-openshift4-previous
+    taskRef:
+      name: openshift4-uninstall
+    resources:
+      inputs:
+        - name: plumbing-git
+          resource: plumbing-git
+    params:
+      - name: IMAGE_NAME
+        value: $(params.IMAGE_NAME)
+      - name: UPLOADER_HOST
+        value: $(params.UPLOADER_HOST)
+
+  - name: install-openshift4-cluster
+    taskRef:
+      name: openshift4-install
+    runAfter: [uninstall-openshift4-previous]
+    resources:
+      inputs:
+        - name: plumbing-git
+          resource: plumbing-git
+    params:
+      - name: IMAGE_NAME
+        value: $(params.IMAGE_NAME)
+      - name: UPLOADER_HOST
+        value: $(params.UPLOADER_HOST)
+
+  - name: build-pipeline-and-push
+    taskRef:
+      name: build-tektoncd-pipeline-and-push
+    runAfter: [install-openshift4-cluster]
+    resources:
+      inputs:
+        - name: plumbing-git
+          resource: plumbing-git
+        - name: tektoncd-pipeline-git
+          resource: tektoncd-pipeline-git
+    params:
+      - name: UPLOADER_HOST
+        value: $(params.UPLOADER_HOST)
+
+  - name: pipeline-test
+    taskRef:
+      name: pipeline-test
+    runAfter: [build-pipeline-and-push]
+    resources:
+      inputs:
+        - name: plumbing-git
+          resource: plumbing-git
+        - name: tektoncd-pipeline-git
+          resource: tektoncd-pipeline-git
+    params:
+      - name: IMAGE_NAME
+        value: $(params.IMAGE_NAME)
+      - name: UPLOADER_HOST
+        value: $(params.UPLOADER_HOST)
+      - name: CLUSTER_NAME
+        value: $(params.CLUSTER_NAME)
+
+  - name: push-images-release-nightly
+    taskRef:
+      name: repush-images-releases
+    runAfter: [pipeline-test]
+    resources:
+      inputs:
+        - name: plumbing-git
+          resource: plumbing-git
+        - name: tektoncd-pipeline-git
+          resource: tektoncd-pipeline-git
+    params:
+      - name: UPLOADER_HOST
+        value: $(params.UPLOADER_HOST)
+      - name: CLUSTER_NAME
+        value: $(params.CLUSTER_NAME)
+
+  - name: delete-cluster
+    taskRef:
+      name: openshift4-uninstall
+    runAfter: [push-images-release-nightly]  # Should be the last task
+    resources:
+      inputs:
+        - name: plumbing-git
+          resource: plumbing-git
+    params:
+      - name: IMAGE_NAME
+        value: $(params.IMAGE_NAME)
+      - name: UPLOADER_HOST
+        value: $(params.UPLOADER_HOST)
+
+  - name: pr-set-status-and-comment
+    taskRef:
+      name: pr-set-status-and-comment
+    runAfter: [delete-cluster]
+    params:
+      - name: pullreq_number
+        value: $(params.pullreq_number)
+      - name: pullreq_repo_full_name
+        value: $(params.pullreq_repo_full_name)
+      - name: pullreq_sha
+        value: $(params.pullreq_sha)
+
+  - name: send-slack-message
+    taskRef:
+      name: send-slack-message
+    runAfter: [delete-cluster]
+    params:
+      - name: pullreq_html_url
+        value: $(params.pullreq_html_url)

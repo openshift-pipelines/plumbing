@@ -1,0 +1,10 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: bootstrap-image
+spec:
+  type: image
+  params:
+    - name: url
+      value: quay.io/openshift-pipeline/ci:bootstrap

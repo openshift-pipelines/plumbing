@@ -1,0 +1,66 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: openshift-pipeline-ci
+spec:
+  serviceAccountName: openshift-pipeline-ci-triggers-sa
+  triggers:
+  - name: openshift-pipeline-ci-pipelinebindings
+    interceptors:
+    - cel:
+        filter: "body.action=='opened' && header.match('X-GitHub-Event', 'pull_request')"
+    bindings:
+    - name: openshift-pipeline-ci-pipelinebinding
+    template:
+      name: openshift-pipeline-ci-triggertemplate
+
+  - name: openshift-pipeline-ci-pipelinerun-failures
+    interceptors:
+    - cel:
+        filter: "body.kind=='PipelineRun' && body.spec.pipelineRef.name=='openshift-pipeline-ci'"
+    bindings:
+    - name: binding-send-slack
+    template:
+      name: template-send-slack
+
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: openshift-pipeline-ci-triggers-role
+rules:
+- apiGroups: ["tekton.dev"]
+  resources: ["eventlisteners", "triggerbindings", "triggertemplates", "tasks", "taskruns"]
+  verbs: ["get"]
+- apiGroups: [""]
+  resources: ["configmaps", "services"]
+  verbs: ["get", "list", "watch", "delete", "create"]
+- apiGroups: ["extensions"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch", "delete", "create"]
+- apiGroups: ["route.openshift.io"]
+  resources: ["routes"]
+  verbs: ["get", "list", "watch", "delete", "create", "patch"]
+- apiGroups: ["tekton.dev"]
+  resources: ["pipelineruns", "pipelineresources", "taskruns"]
+  verbs: ["create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: openshift-pipeline-ci-triggers-binding
+subjects:
+- kind: ServiceAccount
+  name: openshift-pipeline-ci-triggers-sa
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: openshift-pipeline-ci-triggers-role
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openshift-pipeline-ci-triggers-sa

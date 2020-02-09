@@ -1,0 +1,34 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  labels:
+    name: cron-openshift-ci-nightly
+  name: cron-openshift-ci-nightly-cron
+spec:
+  schedule: "0 3 * * *"
+  concurrencyPolicy: "Forbid"
+  startingDeadlineSeconds: 200
+  suspend: false
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            parent: "openshift-ci-nightly"
+        spec:
+          containers:
+          - name: launch-nightly
+            image: quay.io/chmouel/hub-git
+            env:
+            - name: GITHUB_USER
+              value: %GITHUB_USER%
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: github-token
+                  name: openshift-install
+            command: ["/bin/bash"]
+            args: ["-c", "git clone --depth=1 https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/chmouel/scratchpad /tmp/scratchpad && cd /tmp/scratchpad && ./new-pull-request.sh"]
+          restartPolicy: OnFailure

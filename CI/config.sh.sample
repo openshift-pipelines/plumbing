@@ -1,0 +1,48 @@
+# Service Account to run the CI with
+SERVICE_ACCOUNT=builder
+
+# Target namespace on the cluster, if there is an env variable called
+# TARGET_NAMESPACE it would use it instead of the value.
+TARGET_NAMESPACE=${TARGET_NAMESPACE:-ci-openshift-pipelines}
+
+# Your public SSH Key
+PUBLIC_SSH_KEY="" # Specify a Filename
+
+# Your AWS credentials config file (usually on openshift developper aws account,
+# see mojo on how to get them)
+AWS_SECRET_KEY=""
+AWS_ACCESS_KEY=""
+
+# Simple uploader username password
+UPLOADER_HOST=""
+UPLOADER_USERNAME=""
+UPLOADER_PASSWORD=""
+
+# Your registry config credentials (from https://install.openshift.com)
+# Specify the filename not the content
+OPENSHIFT_INSTALL_REGISTRY_TOKEN=""
+
+# The pubring of developers to encrypt the filename too
+# Specify a filename not the content of the file
+DEVELOPPER_PUBRING=""
+
+# A docker config.json with a token to upload to the openshift-pipeline
+# repository
+# Specify a filename not the content of the file
+QUAY_REGISTRY_CONFIG=""
+
+# Add a GitHub token which would post back on GitHub the status of the PR when
+# using in triggers pr mode
+GITHUB_TOKEN=""
+
+# WebConsole URL sometime you may only need the oc get route things but if you
+# don't have the rights then you need to specify it directly
+CONSOLE_URL="https://$(oc get route -n openshift-console console -o jsonpath='{.spec.host}') "
+
+# Slack Webhook URL, The webhook URL where to send slack notifications
+SLACK_WEBHOOK_URL=""
+
+# Local Variables:
+# mode: shell-script
+# End:
+# vim: ft=bash

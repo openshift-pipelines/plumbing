@@ -1,0 +1,74 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: openshift-pipeline-ci-triggertemplate
+spec:
+  params:
+    - name: pullreq_action
+    - name: pullreq_number
+    - name: pullreq_repo_full_name
+    - name: pullreq_sha
+    - name: pullreq_html_url
+
+    - name: namespace
+      description: The namespace to create the resources
+
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1alpha1
+      kind: PipelineRun
+      metadata:
+        labels:
+          generated: openshift-pipeline-ci
+        name: openshift-pipeline-ci-run-$(uid)
+        namespace: $(params.namespace)
+      spec:
+        timeout: "3h"
+        serviceAccountName: %SERVICE_ACCOUNT%
+        pipelineRef:
+          name: openshift-pipeline-ci
+
+        params:
+          - name: UPLOADER_HOST
+            value: %UPLOADER_HOST%  # TODO
+          - name: IMAGE_NAME
+            value: quay.io/openshift-pipeline/ci:bootstrap  # TODO
+          - name: CLUSTER_NAME
+            value: openshift-pipelines-install
+          - name: pullreq_action
+            value: $(params.pullreq_action)
+          - name: pullreq_number
+            value: $(params.pullreq_number)
+          - name: pullreq_repo_full_name
+            value: $(params.pullreq_repo_full_name)
+          - name: pullreq_sha
+            value: $(params.pullreq_sha)
+          - name: pullreq_html_url
+            value: $(params.pullreq_html_url)
+
+        resources:
+          - name: plumbing-git
+            resourceRef:
+              name: plumbing-git
+          - name: tektoncd-pipeline-git
+            resourceRef:
+              name: tektoncd-pipeline-git
+---
+apiVersion: tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: openshift-pipeline-ci-pipelinebinding
+spec:
+  params:
+    - name: namespace
+      value: ci-openshift-pipelines  # TODO
+    - name: pullreq_action
+      value: $(body.action)
+    - name: pullreq_number
+      value: $(body.number)
+    - name: pullreq_repo_full_name
+      value: $(body.repository.full_name)
+    - name: pullreq_sha
+      value: $(body.pull_request.head.sha)
+    - name: pullreq_html_url
+      value: $(body.pull_request.html_url)

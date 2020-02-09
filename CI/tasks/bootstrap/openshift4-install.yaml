@@ -1,0 +1,230 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: openshift4-install
+spec:
+  inputs:
+    resources:
+      - name: plumbing-git
+        type: git
+    params:
+    - name: CLUSTER_NAME
+      description: Cluster name
+      default: "openshift-pipelines-install"
+
+    - name: BASE_DOMAIN
+      description: Base domain of your cluster install
+      default: "devcluster.openshift.com"
+
+    - name: REPLICAS
+      description: How many replicas
+      default: "5"
+
+    - name: AWS_REGION
+      description: AWS Region where to install
+      default: "us-east-1"
+
+    - name: IMAGE_NAME
+      description: The bootstrap image with all the tools needed
+
+    - name: UPLOADER_HOST
+      description: If you have this https://github.com/chmouel/openshift-django-uploader/ installed then set it here.
+
+  steps:
+  - name: openshift-install-config
+    image: registry.access.redhat.com/ubi8/ubi-minimal:latest
+    workingDir: /workspace/install
+    env:
+    - name: REGISTRY_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: registry-token
+    - name: PUBLIC_SSH_KEY
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: public-ssh-key
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: aws-access-key-id
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: aws-secret-access-key
+    script: |
+      #!/usr/bin/env bash
+      cat << EOF > install-config.yaml
+      apiVersion: v1
+      baseDomain: $(inputs.params.BASE_DOMAIN)
+      compute:
+      - hyperthreading: Enabled
+        name: worker
+        platform: {}
+        replicas: $(inputs.params.REPLICAS)
+      controlPlane:
+        hyperthreading: Enabled
+        name: master
+        platform: {}
+        replicas: $(inputs.params.REPLICAS)
+      metadata:
+        creationTimestamp: null
+        name: $(inputs.params.CLUSTER_NAME)
+      networking:
+        clusterNetwork:
+        - cidr: 10.128.0.0/14
+          hostPrefix: 23
+        machineCIDR: 10.0.0.0/16
+        networkType: OpenShiftSDN
+        serviceNetwork:
+        - 172.30.0.0/16
+      platform:
+        aws:
+          region: $(inputs.params.AWS_REGION)
+      pullSecret: '$REGISTRY_TOKEN'
+      sshKey: '$PUBLIC_SSH_KEY'
+      EOF
+
+  - name: openshift-install-create
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: aws-access-key-id
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: aws-secret-access-key
+    image: $(inputs.params.IMAGE_NAME)
+    workingDir: /workspace/install
+    script: |
+      #!/usr/bin/env bash
+      set -eu
+
+      # Trap metadata json on exit so we can do some uninstall perhaps
+      TMP=$(mktemp /tmp/.mm.XXXXXX)
+      function uploadmeta() {
+          [[ -e metadata.json ]] || return
+          cat metadata.json
+          curl -f -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+            -F path=CI/$(inputs.params.CLUSTER_NAME)/metadata.json \
+            -F file=@metadata.json \
+            $(inputs.params.UPLOADER_HOST)/upload
+      }
+      trap uploadmeta EXIT
+
+      # Launch install
+      /usr/local/bin/openshift-install create cluster --log-level=debug
+
+  - name: openshift-install-setup-save-artifacts
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    - name: UPLOADER_PUBRING
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: upload-pubring.gpg
+    image: $(inputs.params.IMAGE_NAME)
+    workingDir: /workspace/install
+    script: |
+      #!/usr/bin/env bash
+      #
+      # We should probably set it in an external script but that's much easier
+      # to iterate here atm.
+      set -e
+      gpg_args=
+      key=
+
+      # Upload: by default it will upload the file as specified in "$1" to
+      # "$CLUSTER_NAME/basename of $1" if you specify a $2 it will upload the $1
+      # file to the destination specified in there.
+      # TODO: move to external shell script so we can commonalize
+      function upload() {
+        dest="$2"
+        [[ -z ${dest} ]] && dest="CI/$(inputs.params.CLUSTER_NAME)/$(basename ${1})"
+        curl -f -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+          -F path=${dest} \
+          -F file=@${1} \
+          $(inputs.params.UPLOADER_HOST)/upload
+      }
+
+      [[ -n $(inputs.params.UPLOADER_HOST) && \
+         -n ${UPLOADER_PUBRING} && \
+         -n ${UPLOADER_USERNAME} && \
+         -n ${UPLOADER_PASSWORD} ]] || exit 0
+
+      # Zip the install.log for further inspection if needed.
+      # We save the last two lines of the installs log which contains easily
+      # readable information about how to to connect the cluster.
+      bzip2 -9c .openshift_install.log > auth/install.log.bz2
+      tail -2 .openshift_install.log > auth/webaccess
+
+      export KUBECONFIG=auth/kubeconfig
+
+      # Sometime the url can let us down, so let's add a counter
+      i=1
+      while [[ $i -le 10 ]];do
+        oc login -u kubeadmin -p "$(cat auth/kubeadmin-password)" --insecure-skip-tls-verify && break || true
+        sleep 5
+        (( i++ ))
+      done
+
+      # TODO: make it configurable
+      MACHINESET=3
+      echo "Scaling machinsets to ${MACHINESET}"
+      for m in $(oc get machineset -n openshift-machine-api -o name); do
+        oc scale --replicas=${MACHINESET} ${m} -n openshift-machine-api
+      done
+
+      # We take all files and encrypt them to multiples gpg keys (openshift
+      # pipelines devs), we do as well for the logs to ensure no leakage can
+      # happen.
+      echo "${UPLOADER_PUBRING}" > /tmp/pubring.pgp
+      gpg --import /tmp/pubring.pgp
+      for key in $(gpg --list-public-keys --list-options no-show-photos \
+                   --fingerprint --with-colons|awk -F: '$1 ~ /fpr/ {print $10}');do
+        gpg_args="$gpg_args -r$key"
+      done
+
+      # Encrypt all fles and public upload them
+      for encryptfile in auth/*;do
+        [[ -f ${encryptfile} ]] || continue
+        gpg --batch -e --trust-model=always ${gpg_args}  ${encryptfile}
+        upload ${encryptfile}.gpg
+      done
+
+      # We are going to have two files than we are going to use for next tasks :
+      #
+      # $URL/private/CI/${CLUSTER_NAME}/config.json -> config file to log to the
+      # target cluster's registry
+      #
+      # $URL/private/CI/${CLUSTER_NAME}/kubeconfig -> the kubeconfig to access the
+      # say cluster registry
+      #
+      # they are in a private repo
+      upload auth/kubeconfig private/CI/$(inputs.params.CLUSTER_NAME)/kubeconfig

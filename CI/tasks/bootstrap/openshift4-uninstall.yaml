@@ -1,0 +1,71 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: openshift4-uninstall
+spec:
+  inputs:
+    resources:
+      - name: plumbing-git
+        type: git
+    params:
+    - name: CLUSTER_NAME
+      description: Cluster name
+      default: "openshift-pipelines-install"
+
+    - name: IMAGE_NAME
+      description: The bootstrap image with all the tools needed
+
+    - name: UPLOADER_HOST
+      description: If you have this https://github.com/chmouel/openshift-django-uploader/ installed then set it here.
+
+  steps:
+  - name: openshift-install-clean-previous-install
+    image: $(inputs.params.IMAGE_NAME)
+    workingDir: /workspace/install
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: aws-access-key-id
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: aws-secret-access-key
+    script: |
+      #!/usr/bin/env bash
+      set -eu
+
+      # Cleanup route53 records
+      # After the 'reaper' has reaped our openshift install in the aws account, it
+      # forget to delete some A records, so the reinstall fails :((
+      # let's be helpful and do it for the reaper ASAP....
+      python $(inputs.resources.plumbing-git.path)/CI/misc/openshift-install-cleanup-route53.records.py \
+        -f $(inputs.params.CLUSTER_NAME) || true
+
+      # We now try to get the metadata.json since that would give the
+      # information needed for the destroy clsuter command of the installer, if
+      # it's no there (we have been reaped already). Then let's just give up and
+      # hope for the best.
+      curl -f -s -O $(inputs.params.UPLOADER_HOST)/CI/$(inputs.params.CLUSTER_NAME)/metadata.json || exit 0
+
+      # Do the actually install
+      echo "Trying to delete previous cluster (if it wasn't reaped already)"
+      /usr/local/bin/openshift-install destroy cluster  --log-level=debug || true
+
+      # Finally delete the metadata.json cause so we dont run the destroy cluster again
+      curl -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} -X DELETE \
+            -F path=CI/$(inputs.params.CLUSTER_NAME)/metadata.json $(inputs.params.UPLOADER_HOST)/upload

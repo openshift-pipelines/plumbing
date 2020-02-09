@@ -1,0 +1,25 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: build-bootstrap
+specs:
+  resources:
+    - name: plumbing-git
+      type: git
+
+    - name: bootstrap-image
+      type: image
+  steps:
+  - name: build-bootstrap
+    taskRef:
+      name: buildah
+    resources:
+      inputs:
+        - name: source
+          resource: plumbing-git
+      outputs:
+        - name: image
+          resource: bootstrap-image
+    params:
+      - name: DOCKERFILE
+        value: CI/tasks/bootstrap/image/Dockerfile

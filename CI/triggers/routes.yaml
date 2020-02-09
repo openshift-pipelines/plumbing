@@ -1,0 +1,12 @@
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: webhook
+spec:
+  to:
+    kind: Service
+    name: el-openshift-pipeline-ci
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge

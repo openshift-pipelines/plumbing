@@ -1,0 +1,43 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: template-send-slack
+spec:
+  params:
+    - name: pullreq_params
+    - name: pullreq_conditions
+    - name: pipelinerun_name
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1alpha1
+      kind: TaskRun
+      metadata:
+        labels:
+          generated: triggers-collectlogs
+        name: triggers-send-slack-$(uid)
+      spec:
+        timeout: "3h"
+        taskRef:
+          name: send-slack-message
+        inputs:
+          params:
+          - name: pullreq_params
+            value: $(params.pullreq_params)
+          - name: pullreq_conditions
+            value: $(params.pullreq_conditions)
+          - name: pipelinerun_name
+            value: $(params.pipelinerun_name)
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: binding-send-slack
+spec:
+  params:
+    - name: pullreq_params
+      value: $(body.spec.params)
+    - name: pullreq_conditions
+      value: $(body.status.conditions)
+    - name: pipelinerun_name
+      value: $(body.metadata.name)

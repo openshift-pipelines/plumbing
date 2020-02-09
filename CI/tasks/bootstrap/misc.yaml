@@ -1,0 +1,213 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: pr-set-status-pending
+  description: |
+    This task will set the CI as running and add a link to the openshift console
+    viewer url.
+spec:
+  inputs:
+    params:
+      - name: pullreq_repo_full_name
+      - name: pullreq_sha
+      - name: pullreq_number
+  steps:
+    - name: pr-set-status-pending
+      env:
+        - name: PR
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['tekton.dev/pipelineRun']
+
+        - name: NS
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+
+        - name: CONSOLE_URL
+          valueFrom:
+            secretKeyRef:
+              name: openshift-install
+              key: console-url
+
+        - name: GITHUBTOKEN
+          valueFrom:
+            secretKeyRef:
+              name: openshift-install
+              key: github-token
+
+      image: registry.access.redhat.com/ubi8/ubi:latest
+      # Should convert everything to Python instead of Shell+Python nightmare
+      script: |
+        #!/usr/libexec/platform-python
+        import json
+        import os
+        import http.client
+
+        status_url = "/repos/$(inputs.params.pullreq_repo_full_name)" \
+                     "/statuses/$(inputs.params.pullreq_sha)"
+
+        # TODO: OpenShift 4.2 format, 4.3 will have a different format
+        follow_url = os.environ["CONSOLE_URL"] + "/k8s/ns/" + os.environ[
+            "NS"] + "/pipelineruns/" + os.environ["PR"]
+
+        data = {
+            "state": "pending",
+            "target_url": follow_url,
+            "description": "The build has started!",
+            "context": "continuous-integration/openshift-pipelines-nightly"
+        }
+
+        conn = http.client.HTTPSConnection("api.github.com")
+        r = conn.request(
+            "POST",
+            status_url,
+            body=json.dumps(data),
+            headers={
+                "User-Agent": "OpenShift CI Pipeline Commenter",
+                "Authorization": "Bearer " + os.environ["GITHUBTOKEN"],
+            })
+        resp = conn.getresponse()
+        if not str(resp.status).startswith("2"):
+            print("Error: %d" % (resp.status))
+            print(resp.read())
+        else:
+          print("GitHub PR #$(inputs.params.pullreq_number) Status has been set")
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: pr-set-status-and-comment
+  description: |
+    This task will set the CI as stopped and add a link to the collectlogs url.
+    It will close the task at the end too (probably can be splitted).
+spec:
+  inputs:
+    params:
+      - name: pullreq_repo_full_name
+      - name: pullreq_sha
+      - name: pullreq_number
+  steps:
+    - name: pr-set-status-and-comment
+      env:
+        - name: PR
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['tekton.dev/pipelineRun']
+
+        - name: GITHUBTOKEN
+          valueFrom:
+            secretKeyRef:
+              name: openshift-install
+              key: github-token
+
+      image: registry.access.redhat.com/ubi8/ubi
+      script: |
+        #!/usr/libexec/platform-python
+        import http.client
+        import json
+        import os
+        import random
+
+        COLLECT_LOGURL = 'https://collectlogs-ci-openshift-pipelines.apps.devint.openshiftknativedemo.org/'
+        NIGHTLY_RELEASE_YAML = 'https://osinstall.chmouel.com/release/pipeline/nightly.yaml'
+
+        status_url = "/repos/$(inputs.params.pullreq_repo_full_name)" \
+                     "/statuses/$(inputs.params.pullreq_sha)"
+        comment_url = "/repos/$(inputs.params.pullreq_repo_full_name)" \
+                      "/issues/$(inputs.params.pullreq_number)"
+
+        # OpenShift 4.2 format, 4.3 will change
+        collect_log_url = COLLECT_LOGURL + "/log" + os.environ["PR"]
+
+        data = {
+            "state": "success",
+            "target_url": collect_log_url,
+            "description": "CI has finished!",
+            "context": "continuous-integration/openshift-pipelines-nightly"
+        }
+
+        conn = http.client.HTTPSConnection("api.github.com")
+        r = conn.request(
+            "POST",
+            status_url,
+            body=json.dumps(data),
+            headers={
+                "User-Agent": "OpenShift CI Pipeline Commenter",
+                "Authorization": "Bearer " + os.environ["GITHUBTOKEN"],
+            })
+        resp = conn.getresponse()
+        if not str(resp.status).startswith("2"):
+            print("Error: %d" % (resp.status))
+            print(resp.read())
+        else:
+            print("GitHub PR #" + os.environ["PR"] +
+                  " status has been set as successfull!")
+
+        GIF_KEYWORDS = "happy"
+        conn = http.client.HTTPSConnection("api.giphy.com")
+        r = conn.request(
+            "GET",
+            "/v1/gifs/search?api_key=dc6zaTOxFJmzC&q=" + GIF_KEYWORDS +
+            "&rating=g&limit=100",
+            body=json.dumps(data),
+            headers={
+                "User-Agent": "Commenter",
+            })
+        resp = conn.getresponse()
+        if not str(resp.status).startswith("2"):
+            print("Error: %d" % (resp.status))
+            print(resp.read())
+
+        rndjeez = json.loads(resp.read().decode())
+        try:
+            gifurl = rndjeez['data'][random.randint(0, len(
+                rndjeez['data']))]['images']['fixed_height_downsampled']['url']
+        except(IndexError):
+            gifurl = 'https://media1.giphy.com/media/MeIucAjPKoA120R7sN/200_d.gif'
+
+        comment_message = f"""
+        <b>OpenShift Pipelines CI</b> has successfully run :rainbow: :yum: :dancer: :100:
+
+        * CI logs is available here: {collect_log_url}
+        * release.yaml is available here: {NIGHTLY_RELEASE_YAML}
+
+        ![happy gif are the best gif]({gifurl})"
+        """
+        conn = http.client.HTTPSConnection("api.github.com")
+        data = {
+            "body": comment_message,
+        }
+        r = conn.request(
+            "POST",
+            comment_url + "/comments",
+            body=json.dumps(data),
+            headers={
+                "User-Agent": "OpenShift CI Pipeline Commenter",
+                "Authorization": "Bearer " + os.environ["GITHUBTOKEN"],
+            })
+        resp = conn.getresponse()
+        if not str(resp.status).startswith("2"):
+            print("Error: %d" % (resp.status))
+            print(resp.read())
+        else:
+            print("GitHub PR #" + os.environ["PR"] + " has a new result comment!")
+
+        conn = http.client.HTTPSConnection("api.github.com")
+        data = {"state": "closed"}
+        r = conn.request(
+            "PATCH",
+            comment_url,
+            body=json.dumps(data),
+            headers={
+                "User-Agent": "OpenShift CI Pipeline Commenter",
+                "Authorization": "Bearer " + os.environ["GITHUBTOKEN"],
+            })
+        resp = conn.getresponse()
+        if not str(resp.status).startswith("2"):
+            print("Error: %d" % (resp.status))
+            print(resp.read())
+        else:
+            print("GitHub PR #$(inputs.params.pullreq_number) has been closed!")
