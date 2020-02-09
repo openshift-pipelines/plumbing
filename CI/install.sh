@@ -98,7 +98,7 @@ config() {
             python -c "import json, sys;r = json.loads(sys.stdin.read());r['secrets'].append({'name': 'quay-reg-cred'});print(json.dumps(r))"|${K} apply -f-
     }
 
-    ${K} get deployment collectlogs -oname >/dev/null 2>/dev/null && {
+    ${K} get deployment collectlogs -oname >/dev/null 2>/dev/null || true && {
         TRIGGERS_URL="https://$(${K} get route webhook -o jsonpath='{.spec.host}')"
         echo -e "------ \e[96mSetting collectlogs to send pr events to webhook service\e[0m"
         ${K} set env deployment/collectlogs -c operator TRIGGERS_URL="${TRIGGERS_URL}"
