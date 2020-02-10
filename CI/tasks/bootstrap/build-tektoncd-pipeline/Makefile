@@ -7,7 +7,7 @@ BUILDAH := buildah
 
 REGISTRY_URL := quay.io/openshift-pipeline/ci
 TARGET_REGISTRY_URL := quay.io/openshift-pipeline/nightly
-PROJECT_IMAGE_PREFIX := tektoncd-pipeline
+PROJECT_IMAGE_PREFIX := tektoncd-pipelines
 
 # The addons images which means shipped in ./vendor files and not in ./cmd
 ADDN_IMAGES=./vendor/github.com/GoogleCloudPlatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher
@@ -55,7 +55,7 @@ create_dockerfiles: ## Create Dockerfiles for binaries, it usually need to be ru
 		echo "${dockerfile} => $(OUTPUT_DIR)/$$bcmd/Dockerfile" ;\
 		sed -e "s,%%BASE_BIN%%,$$bcmd,g" $$dockerfile > \
 			$(OUTPUT_DIR)/$$bcmd/Dockerfile ;\
-		mv $(OUTPUT_DIR)/bin/$$bcmd	 $(OUTPUT_DIR)/$$bcmd/ ;\
+		mv $(OUTPUT_DIR)/bin/$$bcmd $(OUTPUT_DIR)/$$bcmd/ ;\
 	done
 	@rmdir $(OUTPUT_DIR)/bin
 
@@ -69,7 +69,7 @@ container_build: ## Use buildah to start building the containers
 	@set -xe; pushd $(OUTPUT_DIR);\
 	  for dfile in */;do \
 		cd $${dfile};\
-			$(BUILDAH) bud -t $(REGISTRY_URL):`basename $$dfile` -f Dockerfile . ;\
+			$(BUILDAH) bud -t $(REGISTRY_URL):$(PROJECT_IMAGE_PREFIX)-`basename $$dfile` -f Dockerfile . ;\
 		cd .. ;\
 	  done ;\
 	popd >/dev/null
