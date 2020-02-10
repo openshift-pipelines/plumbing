@@ -12,6 +12,7 @@ function resolve_resources() {
     local ignores=$3
     local registry_prefix=$4
     local image_prefix=$5
+    local target_repo=$6
     local cmd
 
     # Build all binaries as regexps
@@ -31,9 +32,9 @@ function resolve_resources() {
         # busybox => registry.access.redhat.com/ubi8/ubi-minimal:latest \
         # -e "s%tianon/true%${registry_prefix}:nop%" \
         sed -e "s%busybox%registry.access.redhat.com/ubi8/ubi-minimal:latest%" \
-            -e "s%tianon/true%${registry_prefix}:nop%" \
-            -e "s%\(.* image: \)\(github.com\)\(.*\/\)\(.*\)%\1 ${registry_prefix}:\4%" \
-            -r -e "s,github.com/tektoncd/pipeline/cmd/${image_regexp},${registry_prefix}:${image_prefix}\1,g" \
+            -e "s%tianon/true%${registry_prefix}:${image_prefix}nop%" \
+            -e "s%\(.* image: \)\(github.com\)\(.*\/\)\(.*\)%\1 ${registry_prefix}:${image_prefix}\4%" \
+            -r -e "s,github.com/tektoncd/${target_repo}/cmd/${image_regexp},${registry_prefix}:${image_prefix}\1,g" \
             $yaml > ${TMP}
 
         # Adding the labels: openshift.io/cluster-monitoring on Namespace to add the cluster-monitoring
@@ -52,9 +53,9 @@ function generate_pipeline_resources() {
     local pipeline_dir=$1
     local output_file=$2
     local registry_prefix=$3
-    local image_prefix=$3
+    local image_prefix=$4
 
-    resolve_resources ${pipeline_dir}/config $output_file noignore $registry_prefix "${image_prefix}-"
+    resolve_resources ${pipeline_dir}/config $output_file noignore $registry_prefix "${image_prefix}-" pipeline
 
     # Appends addon configs such as prometheus monitoring config
     for yaml in $(find CI/tasks/bootstrap/build-tektoncd-pipeline/addons -name "*.yaml" | sort); do
