@@ -93,6 +93,25 @@ spec:
       - name: CLUSTER_NAME
         value: $(params.CLUSTER_NAME)
 
+  - name: triggers-build-test
+    taskRef:
+      name: triggers-build-test
+    runAfter: [build-pipeline-and-push]
+    resources:
+      inputs:
+        - name: plumbing-git
+          resource: plumbing-git
+        - name: tektoncd-pipeline-git
+          resource: tektoncd-pipeline-git
+    params:
+      - name: IMAGE_NAME
+        value: $(params.IMAGE_NAME)
+      - name: UPLOADER_HOST
+        value: $(params.UPLOADER_HOST)
+      - name: CLUSTER_NAME
+        value: $(params.CLUSTER_NAME)
+
+
   - name: push-images-release-nightly
     taskRef:
       name: repush-images-releases

@@ -1,0 +1,255 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: triggers-build-test
+spec:
+  inputs:
+    resources:
+      - name: plumbing-git
+        type: git
+      - name: tektoncd-triggers-git
+        type: git
+    params:
+    - name: IMAGE_NAME
+      description: The bootstrap image with all the tools needed
+    - name: UPLOADER_HOST
+      description: GO Simple Uploader hostname
+    - name: CLUSTER_NAME
+      description: Cluster name
+  steps:
+  - name: binaries-build-dockerfiles
+    # TODO: change to a parameter since that's probably going to be changed
+    # done passably often and we want to commonalize it for the other projects.
+    image: openshift/origin-release:golang-1.13
+    workingDir: $(inputs.resources.plumbing-git.path)
+    script: |
+      #!/usr/bin/env bash
+      set -e
+      mkdir -p $GOPATH/src/github.com/tektoncd
+      ln -sf $(inputs.resources.tektoncd-triggers-git.path) $GOPATH/src/github.com/tektoncd/triggers
+      make -C $(inputs.resources.plumbing-git.path)/CI/tasks/bootstrap/build-tektoncd-pipeline \
+        build_binary create_dockerfiles \
+        PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-triggers-git.path) \
+        OUTPUT_DIR=/workspace/output PROJECT_NAME=github.com/tektoncd/triggers \
+        ADDN_IMAGES="" IMAGES_EXTRAS="" SNOWFLAKES_IMAGES=""
+
+  - name: container-buildpush
+    image: quay.io/buildah/stable:v1.11.0
+    workingDir: $(inputs.resources.plumbing-git.path)
+    volumeMounts:
+    - name: varlibcontainers
+      mountPath: /var/lib/containers
+    securityContext:
+      privileged: true
+    script: |
+      #!/usr/bin/env bash
+      set -eu
+      # I wish we didn't need to do that as it slows down the build, we can
+      # probably build our own image but that's more machinery to setup.... (and
+      # that's not bcause i am lazy i promess)
+      sudo dnf -y install make
+
+      make -C $(inputs.resources.plumbing-git.path)/CI/tasks/bootstrap/build-tektoncd-pipeline \
+        container_build container_push \
+        OUTPUT_DIR=/workspace/output \
+        PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-triggers-git.path) \
+        PROJECT_IMAGE_PREFIX=tektoncd-triggers \
+        ADDN_IMAGES="" IMAGES_EXTRAS="" SNOWFLAKES_IMAGES=""
+
+  - name: generate-upload-release-yaml-ci
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    image: registry.access.redhat.com/ubi8/ubi:latest
+    workingDir: $(inputs.resources.plumbing-git.path)
+    script: |
+      #!/usr/bin/env bash
+      set -ex
+
+      #TODO: Commonalize in shell script
+      function upload() {
+        dest="$2"
+        [[ -z ${dest} ]] && dest="CI/$(inputs.params.CLUSTER_NAME)/$(basename ${1})"
+        curl -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+          -F path=${dest} \
+          -F file=@${1} \
+          $(inputs.params.UPLOADER_HOST)/upload
+      }
+
+      source CI/tasks/bootstrap/build-tektoncd-pipeline/resolve-yamls.sh
+
+      resolve_resources $(inputs.resources.tektoncd-triggers-git.path)/config \
+      /workspace/output/triggers-release.yaml noignore \
+      quay.io/openshift-pipeline/ci \
+      "tektoncd-triggers-" \
+      triggers
+
+      upload /workspace/output/triggers-release.yaml
+
+  - name: get-kubeconfig
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    image: registry.access.redhat.com/ubi8/ubi-minimal:latest
+    script: |
+      #!/usr/bin/env bash
+      set -eu
+      mkdir -p /workspace/kube
+      curl -o /workspace/kube/config \
+           -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+           $(inputs.params.UPLOADER_HOST)/private/CI/$(inputs.params.CLUSTER_NAME)/kubeconfig
+
+  - name: install-triggers-on-cluster
+    image: $(inputs.params.IMAGE_NAME)
+    workingDir: $(inputs.resources.tektoncd-triggers-git.path)
+    script: |
+      #!/usr/bin/env bash
+      set -eu
+      export KUBECONFIG=/workspace/kube/config
+      kubectl delete -f /workspace/output/triggers-release.yaml 2>/dev/null || true
+      kubectl create -f /workspace/output/triggers-release.yaml 2>/dev/null || true
+
+  - name: apply-patches
+    image: $(inputs.params.IMAGE_NAME)
+    workingDir: $(inputs.resources.tektoncd-triggers-git.path)
+    script: |
+      #!/usr/bin/env bash
+      set -eu
+      if [[ -d "$(inputs.resources.plumbing-git.path)/CI/tasks/components/triggers/patches" ]];then
+        for patch in $(inputs.resources.plumbing-git.path)/CI/tasks/components/trigger/patches/*;do
+            [[ ${patch} != *patch && ${patch} != *diff ]] && continue
+            echo "Applying patch $(basename ${patch})"
+            patch -p1 -i ${patch}
+        done
+      fi
+
+  - name: go-e2e-tests
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    image: $(inputs.params.IMAGE_NAME)
+    workingDir: $(inputs.resources.tektoncd-triggers-git.path)
+    script: |
+      #!/usr/bin/env bash
+      set -eu
+      failure=0
+      export BUILD_NUMBER=$RANDOM
+      export KUBECONFIG=/workspace/kube/config
+
+      source vendor/github.com/tektoncd/plumbing/scripts/e2e-tests.sh
+
+      mkdir -p $GOPATH/src/github.com/tektoncd
+      ln -sf $(inputs.resources.tektoncd-triggers-git.path) $GOPATH/src/github.com/tektoncd/triggers
+      cd $GOPATH/src/github.com/tektoncd/triggers
+
+      header "Starting GO E2E test"
+      PATH=/usr/local/go/bin:$PATH # golang image is currently broken, need to remove it soon enough
+      go_test_e2e  -timeout=20m ./test --kubeconfig $KUBECONFIG || failure=1
+
+      (( failure )) && fail_test
+
+      success
+
+  - name: yaml-tests
+    image: $(inputs.params.IMAGE_NAME)
+    workingDir: $(inputs.resources.tektoncd-triggers-git.path)
+    script: |
+      #!/usr/bin/env bash
+      set -eu
+      failure=0
+      export BUILD_NUMBER=$RANDOM
+      export KUBECONFIG=/workspace/kube/config
+      source vendor/github.com/tektoncd/plumbing/scripts/e2e-tests.sh
+
+      header "Starting YAML E2E test"
+      ./test/e2e-tests-yaml.sh || failure=1
+      (( failure )) && fail_test
+
+      success
+
+  - name: triggers-containers-repush
+    image: quay.io/buildah/stable:v1.11.0
+    workingDir: $(inputs.resources.plumbing-git.path)
+    volumeMounts:
+    - name: varlibcontainers
+      mountPath: /var/lib/containers
+    securityContext:
+      privileged: true
+    script: |
+      #!/usr/bin/env bash
+      set -eu
+
+      # I wish we didn't need to do that as it slows down the build, we can
+      # probably build our own image but that's more machinery to setup.... (and
+      # that's not bcause i am lazy i promess)
+      sudo dnf -y install make
+
+      make -C $(inputs.resources.plumbing-git.path)/CI/tasks/bootstrap/build-tektoncd-pipeline \
+        repush_binary \
+        OUTPUT_DIR=/workspace/output \
+        PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-triggers-git.path) \
+        PROJECT_IMAGE_PREFIX=tektoncd-triggers \
+        ADDN_IMAGES="" IMAGES_EXTRAS="" SNOWFLAKES_IMAGES=""
+
+  - name: upload-final-release-yaml-nightly
+    env:
+    - name: UPLOADER_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-username
+    - name: UPLOADER_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: openshift-install
+          key: uploader-password
+    image: registry.access.redhat.com/ubi8/ubi:latest
+    workingDir: $(inputs.resources.plumbing-git.path)
+    script: |
+      #!/usr/bin/env bash
+      set -ex
+
+      #TODO: Commonalize in shell script
+      function upload() {
+        dest="$2"
+        [[ -z ${dest} ]] && dest="CI/$(inputs.params.CLUSTER_NAME)/$(basename ${1})"
+        curl -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
+          -F path=${dest} \
+          -F file=@${1} \
+          $(inputs.params.UPLOADER_HOST)/upload
+      }
+
+      sed 's,quay.io/openshift-pipeline/ci,quay.io/openshift-pipeline/nightly,' \
+      /workspace/output/triggers-release.yaml > /workspace/output/nightly-triggers-release.yaml
+
+      upload /workspace/output/nightly-triggers-release.yaml /release/pipeline/triggers-nightly.yaml
+
+
+  volumes:
+  - name: varlibcontainers
+    emptyDir: {}

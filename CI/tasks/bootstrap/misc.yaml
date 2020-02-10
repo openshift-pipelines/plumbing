@@ -112,7 +112,6 @@ spec:
         import random
 
         COLLECT_LOGURL = 'https://collectlogs-ci-openshift-pipelines.apps.devint.openshiftknativedemo.org/'
-        NIGHTLY_RELEASE_YAML = 'https://osinstall.chmouel.com/release/pipeline/nightly.yaml'
 
         status_url = "/repos/$(inputs.params.pullreq_repo_full_name)" \
                      "/statuses/$(inputs.params.pullreq_sha)"
@@ -172,7 +171,6 @@ spec:
         <b>OpenShift Pipelines CI</b> has successfully run :rainbow: :yum: :dancer: :100:
 
         * CI logs is available here: {collect_log_url}
-        * release.yaml is available here: {NIGHTLY_RELEASE_YAML}
 
         ![happy gif are the best gif]({gifurl})"
         """

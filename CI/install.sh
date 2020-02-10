@@ -50,7 +50,7 @@ install() {
 
 	install_catalog_tasks
 
-	echo -e "------ \e[96mInstalling local templates to run bootstrap\e[0m"
+	echo -e "------ \e[96mInstalling local templates\e[0m"
     ${K} apply -f <(config_params resources/) -f <(config_params tasks/bootstrap/) -f <(config_params tasks/components/) || {
         cat <(config_params resources/) <(config_params tasks/bootstrap/) <(config_params tasks/components/)
         exit 1
@@ -59,9 +59,9 @@ install() {
     # Soon enough we will convert all task to  use this script
     ./misc/make-task.py tasks/bootstrap/templates | kubectl apply -f-
 
-    echo -e "------ \e[96mCreating pipeline and triggers\e[0m"
-	kubectl delete -f <(config_params triggers) -f <(config_params ./pipeline/ci.yaml) 2>/dev/null || true
-	kubectl create -f <(config_params triggers) -f <(config_params ./pipeline/ci.yaml)
+    echo -e "------ \e[96mCreating pipeline and triggers notifications\e[0m"
+	kubectl delete -f <(config_params triggers/) -f <(config_params ./pipeline/ci.yaml) 2>/dev/null || true
+	kubectl create -f <(config_params triggers/) -f <(config_params ./pipeline/ci.yaml)
     kubectl delete -f ./triggers/routes.yaml 2>/dev/null || true
     kubectl create --validate=false -f ./triggers/routes.yaml
 }

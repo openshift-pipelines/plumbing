@@ -1,6 +1,6 @@
 set -eu
 
-source $(git rev-parse --show-toplevel)/config.sh
+source $(git rev-parse --show-toplevel)/CI/config.sh
 
 git push
 

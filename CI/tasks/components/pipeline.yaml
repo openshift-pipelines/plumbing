@@ -82,9 +82,10 @@ spec:
       # Run the integration tests
       header "Running Go e2e tests"
 
-      go test -v -failfast -count=1 -tags=e2e \
+      /usr/local/go/bin/go test -v -failfast -count=1 -tags=e2e \
         -ldflags '-X github.com/tektoncd/pipeline/test.missingKoFatal=false -X github.com/tektoncd/pipeline/test.skipRootUserTests=true' \
         ./test -timeout=20m --kubeconfig=${KUBECONFIG}  || failed=1
+
 
       (( failed )) && fail_test
 

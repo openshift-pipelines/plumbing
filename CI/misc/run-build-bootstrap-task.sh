@@ -4,7 +4,7 @@ set -eu
 
 source $(git rev-parse --show-toplevel)/CI/config.sh
 
-git push
+git push -q
 
 kubectl get -l "tekton.dev/task=build-tektoncd-pipeline-and-push" tr -o name|xargs kubectl delete
 
