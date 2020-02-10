@@ -18,8 +18,9 @@ spec:
   resources:
     - name: plumbing-git
       type: git
-
     - name: tektoncd-pipeline-git
+      type: git
+    - name: tektoncd-triggers-git
       type: git
 
   tasks:
