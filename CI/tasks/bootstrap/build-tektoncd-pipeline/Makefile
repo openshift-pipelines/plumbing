@@ -6,8 +6,8 @@ PIPELINE_REPOSITORY := /workspace/tektoncd-pipeline-git
 BUILDAH := buildah
 
 REGISTRY_URL := quay.io/openshift-pipeline/ci
-
 TARGET_REGISTRY_URL := quay.io/openshift-pipeline/nightly
+PROJECT_IMAGE_PREFIX := tektoncd-pipeline
 
 # The addons images which means shipped in ./vendor files and not in ./cmd
 ADDN_IMAGES=./vendor/github.com/GoogleCloudPlatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher
@@ -27,7 +27,8 @@ build_binary: ## Build TektonCD pipelines binaries
 	mkdir -p $(OUTPUT_DIR)/bin
 	@set -xe ;[[ "$(PROJECT_NAME)XXX" != XXX ]] && prefix=$(PROJECT_NAME) || prefix=$(PIPELINE_REPOSITORY) ; \
 		pushd $(PIPELINE_REPOSITORY) >/dev/null && \
-		for binary in $(ADDN_IMAGES) $(ALL_BINARIES);do all="$$all $$prefix/cmd/$$(basename $$binary)"; done ; \
+		for binary in $(ALL_BINARIES);do all="$$all $$prefix/cmd/$$(basename $$binary)"; done ; \
+		for binary in $(ADDN_IMAGES);do all="$$all $$binary"; done ; \
 		env CGO_ENABLED=0 GOBIN=/workspace/output/bin go install -mod=vendor $$all
 
 repush_binary: ## Take the images from REGISTRY_URL and push it to TARGET_REGISTRY_URL
@@ -78,7 +79,7 @@ container_push: ## Use buildah to push the containers to the $REGISTRY_URL
 	@set -xe ;pushd $(OUTPUT_DIR);\
 	  for dfile in */;do \
 		cd $${dfile};\
-			$(BUILDAH) push $(REGISTRY_URL):`basename $$dfile` ;\
+			$(BUILDAH) push $(REGISTRY_URL):$(PROJECT_IMAGE_PREFIX)-`basename $$dfile` ;\
 		cd .. ;\
 	  done ;\
 	popd >/dev/null
