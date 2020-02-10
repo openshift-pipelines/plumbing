@@ -31,12 +31,13 @@ build_binary: ## Build TektonCD pipelines binaries
 		for binary in $(ADDN_IMAGES);do all="$$all $$binary"; done ; \
 		env CGO_ENABLED=0 GOBIN=/workspace/output/bin go install -mod=vendor $$all
 
+# TODO: THIS MAY BE BUGGY! we should just reconstruct the dockerfile and push it
 repush_binary: ## Take the images from REGISTRY_URL and push it to TARGET_REGISTRY_URL
 	@set -xe;for cmd in $(ALL_BINARIES) $(ADDN_IMAGES) $(SNOWFLAKES_IMAGES);do \
 		bcmd=`basename $$cmd` ;\
-		buildah pull $(REGISTRY_URL):$$bcmd && \
-		buildah tag $(REGISTRY_URL):$$bcmd $(TARGET_REGISTRY_URL):$$bcmd && \
-		buildah push $(TARGET_REGISTRY_URL):$$bcmd ;\
+		$(BUILDAH) pull $(REGISTRY_URL):$(PROJECT_IMAGE_PREFIX)-$$bcmd && \
+		$(BUILDAH) tag $(REGISTRY_URL):$(PROJECT_IMAGE_PREFIX)-$$bcmd $(TARGET_REGISTRY_URL):$(PROJECT_IMAGE_PREFIX)-$$bcmd && \
+		$(BUILDAH) push $(TARGET_REGISTRY_URL):$(PROJECT_IMAGE_PREFIX)-$$bcmd ;\
 		done
 
 create_dockerfiles: ## Create Dockerfiles for binaries, it usually need to be run after build_binary but not enforced
