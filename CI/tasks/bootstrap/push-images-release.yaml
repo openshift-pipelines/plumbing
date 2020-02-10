@@ -23,17 +23,6 @@ spec:
 
   steps:
   - name: containers-repush
-    env:
-    - name: UPLOADER_USERNAME
-      valueFrom:
-        secretKeyRef:
-          name: openshift-install
-          key: uploader-username
-    - name: UPLOADER_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: openshift-install
-          key: uploader-password
     image: quay.io/buildah/stable:v1.11.0
     workingDir: $(inputs.resources.plumbing-git.path)
     volumeMounts:
@@ -53,6 +42,7 @@ spec:
         repush_binary \
         PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-pipeline-git.path) \
         REGISTRY_URL=quay.io/openshift-pipeline/ci \
+        PROJECT_IMAGE_PREFIX=tektoncd-pipelines \
         TARGET_REGISTRY_URL=quay.io/openshift-pipeline/nightly
 
   # TODO: duplication with build-push
@@ -88,12 +78,13 @@ spec:
 
       mkdir -p /workspace/nightly
 
+      #TODO: Cleanup all of this with a simple sed..
       generate_pipeline_resources \
         $(inputs.resources.tektoncd-pipeline-git.path) \
-        /workspace/nightly/release.yaml \
+        /workspace/nightly/pipeline-release.yaml \
         quay.io/openshift-pipeline/nightly
 
-      upload /workspace/nightly/release.yaml /release/pipeline/nightly.yaml
+      upload /workspace/nightly/pipeline-release.yaml /release/pipeline/pipeline-nightly.yaml
   volumes:
   - name: varlibcontainers
     emptyDir: {}

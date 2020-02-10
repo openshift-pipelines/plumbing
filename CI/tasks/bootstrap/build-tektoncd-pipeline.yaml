@@ -20,17 +20,6 @@ spec:
 
   steps:
   - name: binaries-build-dockerfiles
-    env:
-    - name: UPLOADER_USERNAME
-      valueFrom:
-        secretKeyRef:
-          name: openshift-install
-          key: uploader-username
-    - name: UPLOADER_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: openshift-install
-          key: uploader-password
     # TODO: change to a parameter since that's probably going to be changed
     # done passably often and we want to commonalize it for the other projects.
     image: openshift/origin-release:golang-1.13
@@ -44,17 +33,6 @@ spec:
         OUTPUT_DIR=/workspace/output
 
   - name: container-buildpush
-    env:
-    - name: UPLOADER_USERNAME
-      valueFrom:
-        secretKeyRef:
-          name: openshift-install
-          key: uploader-username
-    - name: UPLOADER_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: openshift-install
-          key: uploader-password
     image: quay.io/buildah/stable:v1.11.0
     workingDir: $(inputs.resources.plumbing-git.path)
     volumeMounts:
@@ -74,9 +52,10 @@ spec:
         container_build container_push \
         OUTPUT_DIR=/workspace/output \
         PIPELINE_REPOSITORY=$(inputs.resources.tektoncd-pipeline-git.path) \
+        PROJECT_IMAGE_PREFIX=tektoncd-pipelines \
         REGISTRY_URL=quay.io/openshift-pipeline/ci
 
-  - name: generate-release-yaml
+  - name: generate-store-release-yaml
     env:
     - name: UPLOADER_USERNAME
       valueFrom:
@@ -108,10 +87,11 @@ spec:
 
       generate_pipeline_resources \
         $(inputs.resources.tektoncd-pipeline-git.path) \
-        /workspace/output/release.yaml \
-        quay.io/openshift-pipeline/ci
+        /workspace/output/pipeline-release.yaml \
+        quay.io/openshift-pipeline/ci \
+        tektoncd-pipelines
 
-      upload /workspace/output/release.yaml
+      upload /workspace/output/pipeline-release.yaml
 
   - name: install-release-yaml
     env:
@@ -135,8 +115,8 @@ spec:
            -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} \
            $(inputs.params.UPLOADER_HOST)/private/CI/$(inputs.params.CLUSTER_NAME)/kubeconfig
       echo "Installing OpenShift Pipelines"
-      oc delete -f /workspace/output/release.yaml 2>/dev/null || true # In case if we are doing a shortcut install
-      oc create -f /workspace/output/release.yaml
+      kubectl delete -f /workspace/output/pipeline-release.yaml 2>/dev/null || true # In case if we are doing a shortcut install
+      kubectl create -f /workspace/output/pipeline-release.yaml
 
   volumes:
   - name: varlibcontainers
