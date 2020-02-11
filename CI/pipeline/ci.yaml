@@ -103,7 +103,7 @@ spec:
         - name: plumbing-git
           resource: plumbing-git
         - name: tektoncd-triggers-git
-          resource: tektoncd-pipeline-git
+          resource: tektoncd-triggers-git
     params:
       - name: IMAGE_NAME
         value: $(params.IMAGE_NAME)
