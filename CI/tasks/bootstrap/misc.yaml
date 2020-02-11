@@ -48,9 +48,7 @@ spec:
         status_url = "/repos/$(inputs.params.pullreq_repo_full_name)" \
                      "/statuses/$(inputs.params.pullreq_sha)"
 
-        # TODO: OpenShift 4.2 format, 4.3 will have a different format
-        follow_url = os.environ["CONSOLE_URL"] + "/k8s/ns/" + os.environ[
-            "NS"] + "/pipelineruns/" + os.environ["PR"]
+        follow_url = f"{os.environ['CONSOLE_URL']}/k8s/ns/{os.environ['NS']}/tekton.dev~v1alpha1~PipelineRun/{os.environ['PR']}"
 
         data = {
             "state": "pending",

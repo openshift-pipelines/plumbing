@@ -23,8 +23,7 @@ def get_params_values(name, pullreq_params):
 
 if pullreq_html_url:
     pullreq_url = "$(inputs.params.pullreq_html_url)"
-    webconsole_url = os.environ["CONSOLE_URL"] + "/k8s/ns/" + os.environ[
-        "NS"] + "/pipelineruns/" + os.environ["PR"]
+    webconsole_url = f"{os.environ['CONSOLE_URL']}/k8s/ns/{os.environ['NS']}/tekton.dev~v1alpha1~PipelineRun/{os.environ['PR']}"
     collectlogs_url = COLLECTLOG_BASE + "/log/" + os.environ["PR"]
     subject = f"OpenShift Pipelines CI ran succesfully on {pullreq_url} " \
         ":pipelinedance: :dancing-penguin: :aw_yeah:"
@@ -40,8 +39,7 @@ else:
     repo = get_params_values("pullreq_repo_full_name", pullreq_params)
     prnumber = get_params_values("pullreq_number", pullreq_params)
     pullreq_url = f"https://github.com/{repo}/pull/{prnumber}"
-    webconsole_url = os.environ["CONSOLE_URL"] + "/k8s/ns/" + os.environ[
-        "NS"] + "/pipelineruns/" + "$(inputs.params.pipelinerun_name)"
+    webconsole_url = f"{os.environ['CONSOLE_URL']}/k8s/ns/{os.environ['NS']}/tekton.dev~v1alpha1~PipelineRun/$(inputs.params.pipelinerun_name)"
     collectlogs_url = f"{COLLECTLOG_BASE}/log/$(inputs.params.pipelinerun_name)"
     subject = f"OpenShift Pipelines CI has failed on {pullreq_url} " \
         ":fb-sad: :crying_cat_face: :crying:"
