@@ -79,6 +79,9 @@ spec:
 
       source test/e2e-common.sh
 
+      #kubectl get ns|grep arendelle|awk '{print $1}'|xargs kubectl delete ns
+      #export TEST_KEEP_NAMESPACES=true
+
       # Run the integration tests
       header "Running Go e2e tests"
 
