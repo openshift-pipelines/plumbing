@@ -97,7 +97,7 @@ spec:
   - name: triggers-build-test
     taskRef:
       name: triggers-build-test
-    runAfter: [build-pipeline-and-push]
+    runAfter: [pipeline-test]
     resources:
       inputs:
         - name: plumbing-git
@@ -112,11 +112,10 @@ spec:
       - name: CLUSTER_NAME
         value: $(params.CLUSTER_NAME)
 
-
   - name: push-images-release-nightly
     taskRef:
       name: repush-images-releases
-    runAfter: [pipeline-test]
+    runAfter: [triggers-build-test]
     resources:
       inputs:
         - name: plumbing-git
