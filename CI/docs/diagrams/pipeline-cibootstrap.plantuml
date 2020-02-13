@@ -1,0 +1,17 @@
+@startuml
+start
+ :Create Temporary Cluster;
+ :Build Binaries;
+ :Generate Dockerfile for binaries;
+ :Build containers using buildah;
+ :Push containers to quay.io/openshift-pipeline/ci:${IMAGE_NAME};
+ :Generate release-ci.yaml referencing CI;
+ :Upload release-ci.yaml to external web server;
+ :Deploy ci release.yaml for pipeline on temporary cluster;
+ :Run Tests:
+ :Run components (triggers, cli, catalogs.....)
+ :Repush containers images to quay.io/openshift-pipeline/nightly:${IMAGE_NAME};
+ :Generate release-nightly.yaml referencing nightly;
+ :Upload release-nightly.yaml to external web server;
+stop
+@enduml

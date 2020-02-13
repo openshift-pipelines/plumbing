@@ -1,0 +1,15 @@
+@startuml
+
+participant "Cron" as cron
+participant "GitHub PR" as ghPr
+participant "Trigger Service" as trigger
+participant "Pipeline CI" as pipelineCI
+
+== Cron starting Pipelinerun ==
+autonumber
+
+cron->ghPr: Cron create a new pull request to a GitHub repository.
+ghPr->triggers: GitHub send a webhook to triggers
+triggers->pipelineCI: triggers parse the request and start a new PipelineRun
+
+@enduml
