@@ -92,8 +92,11 @@ spec:
 
       (( failed )) && fail_test
 
-      header "Cleaning up Test NS: ${NS}"
+      header "Cleaning up test namespaces"
       kubectl delete ns ${NS}
+      for i in $(kubectl get ns|grep '^arendelle'|awk '{print $1}');do
+        kubectl delete ns ${i} || true
+      done
 
       success
   - name: yaml-tests
@@ -132,17 +135,14 @@ spec:
       export KUBECONFIG=/workspace/kube/config
       oc new-project ${NS}
 
-      # We are adding the serviceAccount %SERVICE_ACCOUNT% to priviliged so we can run kaniko tasks..
-      oc adm policy add-scc-to-user privileged -z %SERVICE_ACCOUNT%
-
       # We do this so cloudevent would know where to go for our namespace...
-      sed -i  "s/sink.default/sink.${NS}/"  $(inputs.resources.tektoncd-pipeline-git.path)/examples/taskruns/cloud-event.yaml
+      sed -i  "s/sink.default/sink.${NS}/"  ./examples/taskruns/cloud-event.yaml
 
       # We should find a way to exclude install_pipeline_crd and be able to run
       # e2e-tests.sh directly
       source test/e2e-common.sh
 
-      MAX_CONCURRENT_TEST=3
+      MAX_CONCURRENT_TEST=2
 
       function run_batched_yaml_tests() {
           local resource=$1
@@ -152,7 +152,7 @@ spec:
           runtasks=()
 
           # Applying the resources, either *taskruns or * *pipelineruns
-          for file in $(find ${REPO_ROOT_DIR}/examples/${resource}s -name '*.yaml' -not -path "*/no-ci/*" | sort); do
+          for file in $(find ./examples/${resource}s -name '*.yaml' -not -path "*/no-ci/*" | sort); do
               skipit=False
               reltestname=$(basename $file|sed 's/.yaml//')
               for skip in ${SKIP_YAML_TEST[@]};do
@@ -179,7 +179,7 @@ spec:
                       # We have so many OOMKILLED in that cluster that i rather cleanup as much as possible
                       kubectl delete ${resource} -n ${NS} --all >/dev/null || true
                       kubectl delete all -n ${NS} --all >/dev/null || true
-                      kubectl delete -n ${NS} -f ${REPO_ROOT_DIR}/examples/${resource}s/${yamltest}.yaml 2>/dev/null >/dev/null || true
+                      kubectl delete -n ${NS} -f ./examples/${resource}s/${yamltest}.yaml 2>/dev/null >/dev/null || true
                   done
                   runtasks=()
               }
@@ -192,12 +192,26 @@ spec:
       failed=0
       for test in taskrun pipelinerun; do
         header "Running YAML e2e tests for ${test}s"
-        if ! run_batched_yaml_tests ${test}; then
-          echo ">>> ERROR: one or more YAML tests failed"
-          output_yaml_test_results ${test}
-          output_pods_logs ${test}
-          failed=1
-        fi
+
+        flakyness=0
+        while [[ ${flakyness} < 3 ]];do
+           if ! run_batched_yaml_tests ${test}; then
+              REASONS=$(kubectl get -o json ${test} -n ${NS} | python -c 'import json,sys;j = json.loads(sys.stdin.read());print("|".join([ x["status"]["conditions"][0]["message"] for x in j["items"]]))')
+              if [[ "${REASONS}" == *OOMKilled* ]];then
+                  kubectl delete -n ${NS} ${test} --all
+                  (( cnt+=1 ))
+                  continue
+              fi
+
+
+              echo ">>> ERROR: one or more YAML tests failed"
+              output_yaml_test_results ${test}
+              output_pods_logs ${test}
+              failed=1
+           fi
+           break
+        done
+
       done
 
       (( failed )) && fail_test

@@ -2,14 +2,14 @@ apiVersion: tekton.dev/v1alpha1
 kind: Pipeline
 metadata:
   name: build-bootstrap
-specs:
+spec:
   resources:
     - name: plumbing-git
       type: git
 
     - name: bootstrap-image
       type: image
-  steps:
+  tasks:
   - name: build-bootstrap
     taskRef:
       name: buildah

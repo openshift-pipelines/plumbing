@@ -36,6 +36,7 @@ spec:
         value: $(params.pullreq_sha)
 
   - name: uninstall-openshift4-previous
+    runAfter: [pr-set-status-pending]
     taskRef:
       name: openshift4-uninstall
     resources:
