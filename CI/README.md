@@ -77,7 +77,7 @@ Triggers task needs to be deployed the same way we do pipeline.
 
 https://collectlogs-ci-openshift-pipelines.apps.devint.openshiftknativedemo.org/
 
-[![collectlogs](docs/images/success.png)](docs/images/collectlogs-screenshot.png)
+[![collectlogs](docs/images/collectlogs-screenshot.png)](docs/images/collectlogs-screenshot.png)
 
 ## Artifacts produced nightly
 
