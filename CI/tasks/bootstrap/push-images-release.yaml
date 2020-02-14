@@ -82,7 +82,8 @@ spec:
       generate_pipeline_resources \
         $(inputs.resources.tektoncd-pipeline-git.path) \
         /workspace/nightly/pipeline-release.yaml \
-        quay.io/openshift-pipeline/nightly
+        quay.io/openshift-pipeline/nightly \
+        tektoncd-pipelines
 
       upload /workspace/nightly/pipeline-release.yaml /release/pipeline/pipeline-nightly.yaml
   volumes:
