@@ -4,6 +4,8 @@
 * go over all the TODOs in the code
 * Specify release.yaml image by digest instead by tags.
 * Create RoleBinding instead of `oc adm policy` thing...
+* Add trigger failure status to the github pull request (only slack atm)
+* Ensure there is no other pipeline running at the same time.
 
 # Low (post POC)
 * Use customize remove those sed variables :(
