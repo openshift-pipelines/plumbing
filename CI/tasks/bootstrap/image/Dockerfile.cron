@@ -1,5 +1,6 @@
 # make cron image, install hub and git in there
 # docker build -t quay.io/chmouel/hub-git -f Dockerfile.cron . && docker push quay.io/chmouel/hub-git
+# TODO: use upstream hub instead
 FROM registry.access.redhat.com/ubi8/ubi:latest
 
 RUN yum -y update && yum -y install git && yum -y clean all && rm -rf /var/cache/yum
