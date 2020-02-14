@@ -199,7 +199,7 @@ spec:
               REASONS=$(kubectl get -o json ${test} -n ${NS} | python -c 'import json,sys;j = json.loads(sys.stdin.read());print("|".join([ x["status"]["conditions"][0]["message"] for x in j["items"]]))')
               if [[ "${REASONS}" == *OOMKilled* ]];then
                   kubectl delete -n ${NS} ${test} --all
-                  (( cnt+=1 ))
+                  (( flakyness+=1 ))
                   continue
               fi
 
