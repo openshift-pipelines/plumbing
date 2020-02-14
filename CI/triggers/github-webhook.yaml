@@ -56,6 +56,9 @@ spec:
           - name: tektoncd-triggers-git
             resourceRef:
               name: tektoncd-triggers-git
+          - name: tektoncd-cli-git
+            resourceRef:
+              name: tektoncd-cli-git
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: TriggerBinding

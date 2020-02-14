@@ -27,6 +27,7 @@ case $(uname -o) in
         echo "Could not detect platform: $(uname -o)"
         exit 1
 esac
+platform=linux
 
 echo -n "Downloading openshift-clients-${version}: "
 curl -s -L ${URL}/openshift-client-${platform}-${versionnumber}.tar.gz|tar -xzf- -C ${targetdir} oc kubectl

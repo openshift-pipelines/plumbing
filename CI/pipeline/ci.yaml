@@ -22,6 +22,8 @@ spec:
       type: git
     - name: tektoncd-triggers-git
       type: git
+    - name: tektoncd-cli-git
+      type: git
 
   tasks:
   - name: pr-set-status-pending
@@ -113,6 +115,14 @@ spec:
       - name: CLUSTER_NAME
         value: $(params.CLUSTER_NAME)
 
+  - name: cli-build
+    taskRef:
+      name: cli-build
+    runAfter: [pipeline-test]
+    resources:
+      inputs:
+        - name: tektoncd-cli-git
+          resource: tektoncd-cli-git
   - name: push-images-release-nightly
     taskRef:
       name: repush-images-releases
