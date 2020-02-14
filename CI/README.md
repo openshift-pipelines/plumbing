@@ -84,7 +84,7 @@ https://collectlogs-ci-openshift-pipelines.apps.devint.openshiftknativedemo.org/
 * Nightly pipeline release.yaml - https://uploader-ci-openshift-pipelines.apps.devint.openshiftknativedemo.org/release/pipeline/pipeline-nightly.yaml
 * Nightly triggers release.yaml - https://uploader-ci-openshift-pipelines.apps.devint.openshiftknativedemo.org/release/pipeline/triggers-nightly.yaml
 * Nightly images - https://quay.io/repository/openshift-pipeline/nightly?tag=latest&tab=tags
-* Nightly TektonCD CLI - quay.io/openshift-pipeline/nightly:cli
+* Nightly TektonCD CLI image - `quay.io/openshift-pipeline/nightly:cli`
 
 ## Debugging
 
