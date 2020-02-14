@@ -1,0 +1,40 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: cli-build
+spec:
+  inputs:
+    resources:
+      - name: tektoncd-cli-git
+        type: git
+  steps:
+  - name: cli-build
+    image: openshift/origin-release:golang-1.13
+    workingDir: $(inputs.resources.tektoncd-cli-git.path)
+    script: |
+      set -eux
+      make bin/tkn
+      mv bin/tkn /workspace/
+
+  # There is some e2e tests in cli but skipping them now since the current ones
+  # are really useless and not very flexible..
+  - name: build-push-cli-container
+    image: quay.io/buildah/stable:v1.11.0
+    workingDir: /workspace
+    volumeMounts:
+    - name: varlibcontainers
+      mountPath: /var/lib/containers
+    securityContext:
+      privileged: true
+    script: |
+      set -eux
+      image_name=quay.io/openshift-pipeline/nightly:cli
+      bimg=$(buildah from registry.access.redhat.com/ubi8/ubi-minimal:latest)
+      buildah copy ${bimg} tkn /usr/local/bin/tkn
+      buildah config --entrypoint "/usr/local/bin/tkn" ${bimg}
+      buildah commit ${bimg} ${image_name}
+      buildah push ${image_name}
+  volumes:
+  - name: varlibcontainers
+    emptyDir: {}
