@@ -16,9 +16,7 @@ The devint cluster is a stable cluster with a stable version of tekton and no
 cluster-admin rights. This is where we install all our Tasks, Resources and
 Pipeline and where the Cron kicks off every night.
 
-When the crons run it will create a new pull request on :
-
-https://github.com/chmouel/scratchpad
+When the cron run it will create a new pull request on https://github.com/chmouel/scratchpad to start kicking the process.
 
 This repository (to be moved somewhere else) is only here for tracking and
 doesn't contain any meaningfull file except the hooks configuration sending the
@@ -74,6 +72,12 @@ Triggers task needs to be deployed the same way we do pipeline.
   link to the logs.
 
 [![success](docs/images/success.png)](docs/images/success.png)
+
+* We have the logs collected with [collectlogs](https://github.com/chmouel/tektoncd-collectlogs/) onto here :
+
+https://collectlogs-ci-openshift-pipelines.apps.devint.openshiftknativedemo.org/
+
+[![collectlogs](docs/images/success.png)](docs/images/collectlogs-screenshot.png)
 
 ## Artifacts produced nightly
 
