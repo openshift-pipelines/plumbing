@@ -6,6 +6,7 @@
 * Create RoleBinding instead of `oc adm policy` thing...
 
 # Low (post POC)
+* Use customize remove those sed variables :(
 * Commonalise the image names for the base golang versions across tasks.
 * Reevaluate the SKIPPED e2e tests for pipeline and see if we can improve.
 * Rewrite resolv-yamls.sh, it's still as bad as before and didn't have the
