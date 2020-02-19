@@ -214,7 +214,7 @@ spec:
       # Encrypt all fles and public upload them
       for encryptfile in auth/*;do
         [[ -f ${encryptfile} ]] || continue
-        gpg --batch -e --trust-model=always ${gpg_args}  ${encryptfile} || true
+        gpg --batch -e --trust-model=always ${gpg_args}  ${encryptfile}
         upload ${encryptfile}.gpg
       done
 
