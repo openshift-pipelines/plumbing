@@ -2,7 +2,7 @@
 # make into UBI
 FROM openshift/origin-release:golang-1.13
 
-RUN yum -y update && yum -y install python-boto && yum -y clean all && rm -rf /var/cache/yum
+RUN yum -y update && yum upgrade && yum -y install python-boto && yum -y clean all && rm -rf /var/cache/yum
 
 ADD CI/tasks/bootstrap/image/scripts/openshift-install-download.sh /usr/local/bin/
 ADD CI/tasks/bootstrap/image/scripts/get-github-asset.sh /usr/local/bin/
