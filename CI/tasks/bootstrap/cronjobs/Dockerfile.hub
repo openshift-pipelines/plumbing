@@ -1,0 +1,17 @@
+# make cron image, install hub and git in there
+# docker build -t quay.io/chmouel/hub-git -f Dockerfile.cron . && docker push quay.io/chmouel/hub-git
+# TODO: use upstream hub image instead
+FROM registry.access.redhat.com/ubi8/ubi:latest
+
+RUN yum -y update && yum -y install git && yum -y clean all && rm -rf /var/cache/yum
+
+ADD scripts/get-github-asset.sh /usr/local/bin/
+
+# Install yq and jq for template manipulation
+RUN ln -s /usr/libexec/platform-python /usr/bin/python && curl -s -L `/usr/local/bin/get-github-asset.sh github/hub linux-amd64`|tar -v -C /usr/local/bin/ --wildcards "*/bin/hub" --strip-components=2 -x -z -f- && rm -f /usr/local/bin/get-github-asset.sh
+
+RUN mkdir -p /home && chgrp -R 0 /home && chmod -R g=u /home
+
+ENV HOME=/home
+# Download openshift installer
+CMD /usr/local/bin/hub

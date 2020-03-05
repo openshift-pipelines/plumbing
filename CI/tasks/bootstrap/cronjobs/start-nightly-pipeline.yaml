@@ -21,7 +21,7 @@ spec:
         spec:
           containers:
           - name: launch-nightly
-            image: gcr.io/tekton-releases/dogfooding/hub:latest
+            image: quay.io/chmouel/hub-git
             env:
             - name: GITHUB_USER
               value: %GITHUB_USER%
