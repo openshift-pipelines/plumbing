@@ -23,7 +23,7 @@ spec:
         name: openshift-pipeline-ci-run-$(uid)
         namespace: $(params.namespace)
       spec:
-        timeout: "3h"
+        timeout: "4h"
         serviceAccountName: %SERVICE_ACCOUNT%
         pipelineRef:
           name: openshift-pipeline-ci
