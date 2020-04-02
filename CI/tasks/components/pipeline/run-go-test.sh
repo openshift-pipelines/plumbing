@@ -15,10 +15,9 @@ source test/e2e-common.sh
 # Run the integration tests
 header "Running Go e2e tests"
 
-/usr/local/go/bin/go test -v -failfast -count=1 -tags=e2e \
-  -ldflags '-X github.com/tektoncd/pipeline/test.missingKoFatal=false -X github.com/tektoncd/pipeline/test.skipRootUserTests=true' \
-  ./test -timeout=30m --kubeconfig=${KUBECONFIG}  || failed=1
+/usr/local/go/bin/go test -v -failfast -count=1 -tags=e2e -ldflags '-X github.com/tektoncd/pipeline/test.missingKoFatal=false' ./test -skipRootUserTests=true -timeout=20m --kubeconfig $KUBECONFIG || return 1
 
+/usr/local/go/bim/go test -v -failfast -count=1 -tags=e2e -ldflags '-X github.com/tektoncd/pipeline/test/v1alpha1.missingKoFatal=false' ./test/v1alpha1 -skipRootUserTests=true -timeout=20m --kubeconfig $KUBECONFIG || return 1
 
 (( failed )) && fail_test
 

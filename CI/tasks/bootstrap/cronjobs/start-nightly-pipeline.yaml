@@ -31,5 +31,5 @@ spec:
                   key: github-token
                   name: openshift-install
             command: ["/bin/bash"]
-            args: ["-c", "git clone --depth=1 https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/chmouel/scratchpad /tmp/scratchpad && cd /tmp/scratchpad && ./new-pull-request.sh"]
+            args: ["-c", "git clone --depth=1 https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/openshift-pipelines/nightly-ci-kicks /tmp/ci && cd /tmp/ci/hacks && ./new-pull-request.sh"]
           restartPolicy: OnFailure
