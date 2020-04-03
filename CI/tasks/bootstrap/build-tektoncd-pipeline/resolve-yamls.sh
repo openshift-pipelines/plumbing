@@ -31,7 +31,7 @@ function resolve_resources() {
         # tianon/true => openshift/ci-operator/tekton-images/nop/Dockerfile
         # busybox => registry.access.redhat.com/ubi8/ubi-minimal:latest \
         # -e "s%tianon/true%${registry_prefix}:nop%" \
-        sed -e "s%busybox%registry.access.redhat.com/ubi8/ubi-minimal:latest%" \
+        sed -e "s,ko://,,g" -e "s%busybox%registry.access.redhat.com/ubi8/ubi-minimal:latest%" \
             -e "s%tianon/true%${registry_prefix}:${image_prefix}nop%" \
             -e "s%\(.* image: \)\(github.com\)\(.*\/\)\(.*\)%\1 ${registry_prefix}:${image_prefix}\4%" \
             -r -e "s,github.com/tektoncd/${target_repo}/cmd/${image_regexp},${registry_prefix}:${image_prefix}\1,g" \
