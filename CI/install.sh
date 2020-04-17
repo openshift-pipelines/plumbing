@@ -55,7 +55,8 @@ install() {
 		 -f <(config_params tasks/bootstrap/cronjobs/) -f <(config_params tasks/components/) || {
 	    tmpf=$TMPDIR/apply-failed-$$.yaml
         cat <(config_params tasks/bootstrap/cronjobs/) <(config_params resources/) <(config_params tasks/bootstrap/) <(config_params tasks/components/) > ${tmpf}
-		echo "Applying resources failed; template avaialble here: ${tmpf}"
+		cp ${tmpf} /tmp/debug-$$.yaml
+		echo "Applying resources failed; template avaialble here: /tmp/debug-$$.yaml"
         exit 1
     }
 

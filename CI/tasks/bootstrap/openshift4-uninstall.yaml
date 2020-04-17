@@ -53,8 +53,8 @@ spec:
       # After the 'reaper' has reaped our openshift install in the aws account, it
       # forget to delete some A records, so the reinstall fails :((
       # let's be helpful and do it for the reaper ASAP....
-      # python $(inputs.resources.plumbing-git.path)/CI/misc/openshift-install-cleanup-route53.records.py \
-      # -f $(inputs.params.CLUSTER_NAME) || true
+      python $(inputs.resources.plumbing-git.path)/CI/misc/openshift-install-cleanup-route53.records.py \
+      -f $(inputs.params.CLUSTER_NAME) || true
 
       # We now try to get the metadata.json since that would give the
       # information needed for the destroy clsuter command of the installer, if
@@ -64,7 +64,7 @@ spec:
 
       # Do the actually install
       echo "Trying to delete previous cluster (if it wasn't reaped already)"
-      /usr/local/bin/openshift-install destroy cluster  --log-level=debug || true
+      timeout 30m /usr/local/bin/openshift-install destroy cluster  --log-level=debug || true
 
       # Finally delete the metadata.json cause so we dont run the destroy cluster again
       curl -u ${UPLOADER_USERNAME}:${UPLOADER_PASSWORD} -X DELETE \
