@@ -1,0 +1,383 @@
+# Single source of truth for openshift-pipelines branch-protection.
+#
+# Every repo listed here gets:
+#   - main (or master) branch protection with the org-wide baseline
+#   - Optional per-repo required status checks
+#   - Optional release-branch protection (release-* pattern)
+#
+# Baseline rules (defined in terraform variables):
+#   - No force pushes
+#   - No branch deletion
+#   - Require 1 approving review
+#   - Dismiss stale reviews on new pushes
+#   - No admin bypass
+#
+# Per-repo "checks" are additive required status-check contexts.
+# Leave empty ([]) for repos with no CI status checks.
+
+# -------------------------------------------------------------------
+# Core platform repos (tektoncd forks + downstream components)
+# -------------------------------------------------------------------
+repos:
+  # -- Tekton forks --
+  tektoncd-pipeline:
+    default_branch: main
+    checks: []
+
+  tektoncd-triggers:
+    default_branch: main
+    checks: []
+
+  tektoncd-chains:
+    default_branch: main
+    checks: []
+
+  tektoncd-cli:
+    default_branch: main
+    checks: []
+
+  tektoncd-results:
+    default_branch: main
+    checks: []
+
+  tektoncd-hub:
+    default_branch: main
+    checks: []
+
+  tektoncd-pruner:
+    default_branch: main
+    checks: []
+
+  tektoncd-catalog:
+    default_branch: main
+    checks: []
+
+  tektoncd-plumbing:
+    default_branch: main
+    checks: []
+
+  tektoncd-git-clone:
+    default_branch: main
+    checks: []
+
+  tektoncd-killercoda:
+    default_branch: main
+    checks: []
+
+  tektoncd-results-for-konflux:
+    default_branch: downstream-0.14.0-2
+    checks: []
+
+  # -- Operator & release --
+  operator:
+    default_branch: main
+    checks: []
+
+  operator-downgrade:
+    default_branch: main
+    checks: []
+
+  hack:
+    default_branch: main
+    checks: []
+
+  release-tests:
+    default_branch: master
+    checks: []
+
+  release-tests-ginkgo:
+    default_branch: main
+    checks: []
+
+  release-ui-tests:
+    default_branch: main
+    checks: []
+
+  release-tektoncd-task:
+    default_branch: main
+    checks: []
+
+  release-ready:
+    default_branch: main
+    checks: []
+
+  osp-release:
+    default_branch: main
+    checks: []
+
+  # -- Console & UI --
+  console-plugin:
+    default_branch: main
+    checks:
+      - "ci/prow/images"
+      - "ci/prow/build"
+      - "ci/prow/e2e"
+      - "ci/prow/frontend"
+
+  p12n-console-plugin:
+    default_branch: main
+    checks: []
+
+  # -- Pipelines as Code --
+  pac-downstream:
+    default_branch: main
+    checks: []
+
+  pac-boussole:
+    default_branch: main
+    checks: []
+
+  pac-demo:
+    default_branch: main
+    checks: []
+
+  pipelines-as-code-e2e-tests:
+    default_branch: main
+    checks: []
+
+  pipelines-as-code-e2e-tests-private:
+    default_branch: main
+    checks: []
+
+  pipelines-as-code-e2e-tests-webhook:
+    default_branch: main
+    checks: []
+
+  pipelines-as-code-infra:
+    default_branch: main
+    checks: []
+
+  startpaac:
+    default_branch: main
+    checks: []
+
+  # -- Tasks --
+  task-buildpacks:
+    default_branch: main
+    checks: []
+
+  task-containers:
+    default_branch: main
+    checks: []
+
+  task-git:
+    default_branch: main
+    checks: []
+
+  task-maven:
+    default_branch: main
+    checks: []
+
+  task-openshift:
+    default_branch: main
+    checks: []
+
+  # -- Pipeline Service --
+  pipeline-service:
+    default_branch: main
+    checks: []
+
+  pipeline-service-exporter:
+    default_branch: main
+    checks: []
+
+  pipeline-service-workspace-controller:
+    default_branch: main
+    checks: []
+
+  # -- Catalog / CI tooling --
+  catalog-cd:
+    default_branch: main
+    checks: []
+
+  nightly-ci-kicks:
+    default_branch: master
+    checks: []
+
+  performance:
+    default_branch: main
+    checks:
+      - "ci/prow/images"
+
+  ecosystem-images:
+    default_branch: main
+    checks: []
+
+  # -- Productisation (p12n) --
+  p12n-manual-approval-gate:
+    default_branch: main
+    checks: []
+
+  p12n-multicluster-proxy-aae:
+    default_branch: main
+    checks: []
+
+  p12n-opc:
+    default_branch: main
+    checks: []
+
+  p12n-syncer-service:
+    default_branch: main
+    checks: []
+
+  p12n-tekton-assist:
+    default_branch: main
+    checks: []
+
+  p12n-tekton-caches:
+    default_branch: main
+    checks: []
+
+  # -- Other components --
+  manual-approval-gate:
+    default_branch: main
+    checks: []
+
+  multicluster-proxy-aae:
+    default_branch: main
+    checks: []
+
+  multi-cluster:
+    default_branch: main
+    checks: []
+
+  syncer-service:
+    default_branch: main
+    checks: []
+
+  tekton-assist:
+    default_branch: next
+    checks: []
+
+  tekton-caches:
+    default_branch: main
+    checks: []
+
+  tekton-kueue:
+    default_branch: main
+    checks: []
+
+  tekton-task-group:
+    default_branch: main
+    checks: []
+
+  tekton-wrap-pipeline:
+    default_branch: main
+    checks: []
+
+  kueue:
+    default_branch: main
+    checks: []
+
+  opc:
+    default_branch: main
+    checks: []
+
+  must-gather:
+    default_branch: main
+    checks: []
+
+  # -- Docs, examples, misc --
+  architecture:
+    default_branch: main
+    checks: []
+
+  cookbook:
+    default_branch: main
+    checks: []
+
+  docs:
+    default_branch: main
+    checks: []
+
+  knowledge-base:
+    default_branch: main
+    checks: []
+
+  pipelines-examples:
+    default_branch: main
+    checks: []
+
+  pipelines-tutorial:
+    default_branch: master
+    checks: []
+
+  toolbox:
+    default_branch: main
+    checks: []
+
+  # -- CLI tooling --
+  setup-tektoncd-cli:
+    default_branch: main
+    checks: []
+
+  serve-tkn-cli:
+    default_branch: main
+    checks: []
+
+  tkn-autogenerate:
+    default_branch: main
+    checks: []
+
+  homebrew-pipelines-as-code:
+    default_branch: main
+    checks: []
+
+  # -- AI / LLM --
+  ai-approver:
+    default_branch: main
+    checks: []
+
+  lightspeed-rag-content:
+    default_branch: main
+    checks: []
+
+  skills:
+    default_branch: main
+    checks: []
+
+  pr-agent-settings:
+    default_branch: main
+    checks: []
+
+  # -- Team / org tooling --
+  tekshift-team-automation:
+    default_branch: main
+    checks: []
+
+  osp-component-dashboard:
+    default_branch: main
+    checks: []
+
+  coverage-dashboard:
+    default_branch: main
+    checks: []
+
+  cfp-radar:
+    default_branch: main
+    checks: []
+
+  skipjira:
+    default_branch: main
+    checks: []
+
+  streamstress:
+    default_branch: main
+    checks: []
+
+  cumin:
+    default_branch: main
+    checks: []
+
+  # -- Misc --
+  hub:
+    default_branch: main
+    checks: []
+
+  jenkins-to-tekton:
+    default_branch: main
+    checks: []
+
+  test-private:
+    default_branch: main
+    checks: []
