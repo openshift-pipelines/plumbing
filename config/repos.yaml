@@ -341,6 +341,10 @@ repos:
     checks: []
 
   # -- Team / org tooling --
+  plumbing:
+    default_branch: main
+    checks: []
+
   tekshift-team-automation:
     default_branch: main
     checks: []

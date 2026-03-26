@@ -1,0 +1,98 @@
+name: Branch Protection
+
+on:
+  pull_request:
+    paths:
+      - "config/repos.yaml"
+      - "terraform/branch-protection/**"
+  push:
+    branches: [main]
+    paths:
+      - "config/repos.yaml"
+      - "terraform/branch-protection/**"
+  schedule:
+    # Daily drift detection at midnight UTC
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "Terraform command to run"
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+        default: plan
+
+permissions:
+  contents: read
+  pull-requests: write   # post plan output as PR comment
+
+env:
+  TF_DIR: terraform/branch-protection
+  GITHUB_TOKEN: ${{ secrets.ORG_ADMIN_TOKEN }}
+
+jobs:
+  terraform:
+    name: Terraform ${{ github.event.inputs.command || 'plan' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.7"
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform init -input=false
+
+      - name: Terraform Validate
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          terraform plan -input=false -no-color -out=tfplan 2>&1 | tee plan-output.txt
+          echo "exitcode=$?" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      - name: Post plan to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('${{ env.TF_DIR }}/plan-output.txt', 'utf8');
+            const maxLen = 60000; // GitHub comment limit is 65536
+            const truncated = plan.length > maxLen
+              ? plan.substring(0, maxLen) + '\n\n... (truncated)'
+              : plan;
+
+            const body = `### Terraform Plan 📋
+
+            \`\`\`
+            ${truncated}
+            \`\`\`
+
+            *Triggered by: ${context.actor}*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body,
+            });
+
+      - name: Fail on plan error
+        if: steps.plan.outputs.exitcode != '0' && steps.plan.outputs.exitcode != ''
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.event.inputs.command == 'apply'
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform apply -auto-approve -input=false tfplan
