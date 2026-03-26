@@ -42,8 +42,8 @@ jobs:
         id: generate_token
         uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3
         with:
-          app-id: ${{ secrets.BRANCH_PROTECTION_APP_ID }}
-          private-key: ${{ secrets.BRANCH_PROTECTION_APP_PRIVATE_KEY }}
+          app-id: ${{ secrets.PLUMBING_APP_ID }}
+          private-key: ${{ secrets.PLUMBING_APP_PRIVATE_KEY }}
           owner: openshift-pipelines
 
       - name: Checkout
