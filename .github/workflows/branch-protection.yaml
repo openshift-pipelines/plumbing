@@ -150,14 +150,15 @@ jobs:
             "repos/${{ github.repository }}/contents/${{ env.STATE_FILE }}?ref=${{ env.STATE_BRANCH }}" \
             --jq '.sha' 2>/dev/null || echo "")
 
-          # Build JSON payload with base64-encoded state (use file to avoid ARG_MAX)
-          CONTENT=$(base64 -w0 "$STATE_PATH")
+          # Build JSON payload with base64-encoded state
+          # Use file-based approach to avoid ARG_MAX limits on large state
+          base64 -w0 "$STATE_PATH" > /tmp/state-b64.txt
           if [ -n "$FILE_SHA" ]; then
-            jq -n --arg content "$CONTENT" --arg sha "$FILE_SHA" \
+            jq -n --rawfile content /tmp/state-b64.txt --arg sha "$FILE_SHA" \
               '{message: "Update branch-protection state", content: $content, branch: "'"${{ env.STATE_BRANCH }}"'", sha: $sha}' \
               > /tmp/state-payload.json
           else
-            jq -n --arg content "$CONTENT" \
+            jq -n --rawfile content /tmp/state-b64.txt \
               '{message: "Initial branch-protection state", content: $content, branch: "'"${{ env.STATE_BRANCH }}"'"}' \
               > /tmp/state-payload.json
           fi
