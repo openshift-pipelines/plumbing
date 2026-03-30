@@ -25,11 +25,13 @@ on:
         default: plan
 
 permissions:
-  contents: read
+  contents: write # read for checkout + write for saving state to terraform-state branch
   pull-requests: write # post plan output as PR comment
 
 env:
   TF_DIR: terraform/branch-protection
+  STATE_BRANCH: terraform-state
+  STATE_FILE: branch-protection.tfstate
 
 jobs:
   terraform:
@@ -50,6 +52,24 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
+
+      - name: Restore Terraform state
+        id: restore_state
+        run: |
+          # Fetch state file from the terraform-state branch
+          STATE_CONTENT=$(gh api \
+            "repos/${{ github.repository }}/contents/${{ env.STATE_FILE }}?ref=${{ env.STATE_BRANCH }}" \
+            --jq '.content' 2>/dev/null || echo "")
+          if [ -n "$STATE_CONTENT" ]; then
+            echo "$STATE_CONTENT" | base64 -d > "${{ env.TF_DIR }}/terraform.tfstate"
+            echo "restored=true" >> "$GITHUB_OUTPUT"
+            echo "State file restored from ${{ env.STATE_BRANCH }} branch"
+          else
+            echo "restored=false" >> "$GITHUB_OUTPUT"
+            echo "No existing state file found, starting fresh"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0
@@ -111,3 +131,39 @@ jobs:
         run: terraform apply -auto-approve -input=false tfplan
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+
+      - name: Save Terraform state
+        if: github.event.inputs.command == 'apply' && success()
+        run: |
+          STATE_PATH="${{ env.TF_DIR }}/terraform.tfstate"
+          if [ ! -f "$STATE_PATH" ]; then
+            echo "No state file to save"
+            exit 0
+          fi
+
+          # Get current file SHA if it exists (needed for updates)
+          FILE_SHA=$(gh api \
+            "repos/${{ github.repository }}/contents/${{ env.STATE_FILE }}?ref=${{ env.STATE_BRANCH }}" \
+            --jq '.sha' 2>/dev/null || echo "")
+
+          # Upload state file to the terraform-state branch
+          CONTENT=$(base64 -w0 "$STATE_PATH")
+          if [ -n "$FILE_SHA" ]; then
+            gh api "repos/${{ github.repository }}/contents/${{ env.STATE_FILE }}" \
+              -X PUT \
+              -f message="Update branch-protection state" \
+              -f content="$CONTENT" \
+              -f branch="${{ env.STATE_BRANCH }}" \
+              -f sha="$FILE_SHA" \
+              --silent
+          else
+            gh api "repos/${{ github.repository }}/contents/${{ env.STATE_FILE }}" \
+              -X PUT \
+              -f message="Initial branch-protection state" \
+              -f content="$CONTENT" \
+              -f branch="${{ env.STATE_BRANCH }}" \
+              --silent
+          fi
+          echo "State saved to ${{ env.STATE_BRANCH }} branch"
+        env:
+          GH_TOKEN: ${{ github.token }}
