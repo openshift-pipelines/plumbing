@@ -1,10 +1,18 @@
 # -----------------------------------------------------------------
+# Look up repo node IDs so imported state matches config
+# -----------------------------------------------------------------
+data "github_repository" "repos" {
+  for_each = toset(local.all_repos)
+  name     = each.key
+}
+
+# -----------------------------------------------------------------
 # Default-branch protection for every repo in config/repos.yaml
 # -----------------------------------------------------------------
 resource "github_branch_protection" "default" {
   for_each = toset(local.all_repos)
 
-  repository_id = each.key
+  repository_id = data.github_repository.repos[each.key].node_id
   pattern       = local.default_branches[each.key]
 
   enforce_admins                  = var.enforce_admins
@@ -36,7 +44,7 @@ resource "github_branch_protection" "default" {
 resource "github_branch_protection" "releases" {
   for_each = toset(local.all_repos)
 
-  repository_id = each.key
+  repository_id = data.github_repository.repos[each.key].node_id
   pattern       = "release-*"
 
   enforce_admins          = false
