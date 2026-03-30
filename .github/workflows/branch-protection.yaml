@@ -92,7 +92,7 @@ jobs:
         id: plan
         working-directory: ${{ env.TF_DIR }}
         run: |
-          terraform plan -input=false -no-color -out=tfplan 2>&1 | tee plan-output.txt
+          terraform plan -input=false -no-color -parallelism=5 -out=tfplan 2>&1 | tee plan-output.txt
           echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
@@ -132,7 +132,7 @@ jobs:
       - name: Terraform Apply
         if: github.event.inputs.command == 'apply'
         working-directory: ${{ env.TF_DIR }}
-        run: terraform apply -auto-approve -input=false tfplan
+        run: terraform apply -auto-approve -input=false -parallelism=5 tfplan
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
