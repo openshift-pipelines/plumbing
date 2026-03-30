@@ -56,12 +56,16 @@ jobs:
       - name: Restore Terraform state
         id: restore_state
         run: |
+          set +e
           # Fetch state file from the terraform-state branch
-          STATE_CONTENT=$(gh api \
+          RESPONSE=$(gh api \
             "repos/${{ github.repository }}/contents/${{ env.STATE_FILE }}?ref=${{ env.STATE_BRANCH }}" \
-            --jq '.content' 2>/dev/null || echo "")
-          if [ -n "$STATE_CONTENT" ]; then
-            echo "$STATE_CONTENT" | base64 -d > "${{ env.TF_DIR }}/terraform.tfstate"
+            2>/dev/null)
+          EXIT_CODE=$?
+          set -e
+
+          if [ $EXIT_CODE -eq 0 ] && echo "$RESPONSE" | jq -e '.content' > /dev/null 2>&1; then
+            echo "$RESPONSE" | jq -r '.content' | base64 -d > "${{ env.TF_DIR }}/terraform.tfstate"
             echo "restored=true" >> "$GITHUB_OUTPUT"
             echo "State file restored from ${{ env.STATE_BRANCH }} branch"
           else
