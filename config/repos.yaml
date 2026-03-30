@@ -86,22 +86,6 @@ repos:
     default_branch: main
     checks: []
 
-  pipelines-as-code-e2e-tests:
-    default_branch: main
-    checks: []
-
-  pipelines-as-code-e2e-tests-private:
-    default_branch: main
-    checks: []
-
-  pipelines-as-code-e2e-tests-webhook:
-    default_branch: main
-    checks: []
-
-  pipelines-as-code-infra:
-    default_branch: main
-    checks: []
-
   # -- Tasks --
   task-buildpacks:
     default_branch: main
@@ -229,15 +213,7 @@ repos:
     default_branch: main
     checks: []
 
-  cookbook:
-    default_branch: main
-    checks: []
-
   docs:
-    default_branch: main
-    checks: []
-
-  knowledge-base:
     default_branch: main
     checks: []
 
