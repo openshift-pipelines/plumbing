@@ -16,34 +16,9 @@
 # Leave empty ([]) for repos with no CI status checks.
 
 # -------------------------------------------------------------------
-# Core platform repos (tektoncd forks + downstream components)
+# Core platform repos
 # -------------------------------------------------------------------
 repos:
-  # -- Tekton forks --
-  tektoncd-pipeline:
-    default_branch: main
-    checks: []
-
-  tektoncd-triggers:
-    default_branch: main
-    checks: []
-
-  tektoncd-chains:
-    default_branch: main
-    checks: []
-
-  tektoncd-cli:
-    default_branch: main
-    checks: []
-
-  tektoncd-results:
-    default_branch: main
-    checks: []
-
-  tektoncd-hub:
-    default_branch: main
-    checks: []
-
   tektoncd-pruner:
     default_branch: main
     checks: []
@@ -52,20 +27,8 @@ repos:
     default_branch: main
     checks: []
 
-  tektoncd-plumbing:
-    default_branch: main
-    checks: []
-
-  tektoncd-git-clone:
-    default_branch: main
-    checks: []
-
   tektoncd-killercoda:
     default_branch: main
-    checks: []
-
-  tektoncd-results-for-konflux:
-    default_branch: downstream-0.14.0-2
     checks: []
 
   # -- Operator & release --
@@ -119,15 +82,7 @@ repos:
     checks: []
 
   # -- Pipelines as Code --
-  pac-downstream:
-    default_branch: main
-    checks: []
-
   pac-boussole:
-    default_branch: main
-    checks: []
-
-  pac-demo:
     default_branch: main
     checks: []
 
@@ -144,10 +99,6 @@ repos:
     checks: []
 
   pipelines-as-code-infra:
-    default_branch: main
-    checks: []
-
-  startpaac:
     default_branch: main
     checks: []
 
@@ -265,10 +216,6 @@ repos:
     default_branch: main
     checks: []
 
-  kueue:
-    default_branch: main
-    checks: []
-
   opc:
     default_branch: main
     checks: []
@@ -298,10 +245,6 @@ repos:
     default_branch: main
     checks: []
 
-  pipelines-tutorial:
-    default_branch: master
-    checks: []
-
   toolbox:
     default_branch: main
     checks: []
@@ -325,10 +268,6 @@ repos:
 
   # -- AI / LLM --
   ai-approver:
-    default_branch: main
-    checks: []
-
-  lightspeed-rag-content:
     default_branch: main
     checks: []
 
@@ -374,10 +313,6 @@ repos:
     checks: []
 
   # -- Misc --
-  hub:
-    default_branch: main
-    checks: []
-
   jenkins-to-tekton:
     default_branch: main
     checks: []
