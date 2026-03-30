@@ -293,6 +293,4 @@ repos:
     default_branch: main
     checks: []
 
-  test-private:
-    default_branch: main
-    checks: []
+

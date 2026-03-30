@@ -70,11 +70,6 @@ import {
   id = "R_kgDOHDMFgw:main"
 }
 
-import {
-  to = github_branch_protection.default["test-private"]
-  id = "R_kgDOJxr7ZA:main"
-}
-
 # -- Release-* branch protection (already existed) --
 
 import {
