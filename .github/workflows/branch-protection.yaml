@@ -137,7 +137,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       - name: Save Terraform state
-        if: github.event.inputs.command == 'apply' && success()
+        if: github.event.inputs.command == 'apply' && !cancelled()
         run: |
           STATE_PATH="${{ env.TF_DIR }}/terraform.tfstate"
           if [ ! -f "$STATE_PATH" ]; then
