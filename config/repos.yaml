@@ -267,6 +267,7 @@ repos:
   osp-component-dashboard:
     default_branch: main
     checks: []
+    required_approving_review_count: 0  # automated bot commits (vuln scans)
 
   coverage-dashboard:
     default_branch: main

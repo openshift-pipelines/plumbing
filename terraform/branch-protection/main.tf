@@ -31,10 +31,13 @@ resource "github_branch_protection" "default" {
     }
   }
 
-  required_pull_request_reviews {
-    dismiss_stale_reviews           = var.dismiss_stale_reviews
-    require_code_owner_reviews      = var.require_code_owner_reviews
-    required_approving_review_count = var.required_approving_review_count
+  dynamic "required_pull_request_reviews" {
+    for_each = local.repo_required_approving_review_count[each.key] > 0 ? [1] : []
+    content {
+      dismiss_stale_reviews           = var.dismiss_stale_reviews
+      require_code_owner_reviews      = var.require_code_owner_reviews
+      required_approving_review_count = local.repo_required_approving_review_count[each.key]
+    }
   }
 }
 

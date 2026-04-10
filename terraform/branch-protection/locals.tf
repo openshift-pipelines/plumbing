@@ -15,4 +15,10 @@ locals {
     for repo, cfg in local.config.repos :
     repo => cfg.checks
   }
+
+  # Map of repo -> required approving review count (per-repo override or global default)
+  repo_required_approving_review_count = {
+    for repo, cfg in local.config.repos :
+    repo => lookup(cfg, "required_approving_review_count", var.required_approving_review_count)
+  }
 }
