@@ -81,11 +81,6 @@ repos:
     default_branch: main
     checks: []
 
-  # -- Pipelines as Code --
-  pac-boussole:
-    default_branch: main
-    checks: []
-
   # -- Tasks --
   task-buildpacks:
     default_branch: main
