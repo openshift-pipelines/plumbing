@@ -1,19 +1,23 @@
-# Single source of truth for openshift-pipelines branch-protection.
+# Single source of truth for openshift-pipelines repository protection.
 #
-# Every repo listed here gets:
-#   - main (or master) branch protection with the org-wide baseline
-#   - Optional per-repo required status checks
-#   - Optional release-branch protection (release-* pattern)
+# Every repo listed here gets a "default" repository ruleset with:
+#   - No force pushes (non_fast_forward)
+#   - No branch deletion (deletion)
+#   - PR review requirements (configurable per-repo)
+#   - Optional required status checks
+#   - Admin bypass enabled
 #
-# Baseline rules (defined in terraform variables):
-#   - No force pushes
-#   - No branch deletion
-#   - Require 1 approving review
-#   - Dismiss stale reviews on new pushes
-#   - No admin bypass
-#
-# Per-repo "checks" are additive required status-check contexts.
-# Leave empty ([]) for repos with no CI status checks.
+# Per-repo fields:
+#   default_branch:                   Branch name (main, master, etc.)
+#   checks:                           Required status check contexts ([] for none)
+#   required_approving_review_count:  Override approval count (default: 1, set 0 for bot repos)
+#   ruleset:                          Extra ruleset config overrides (optional)
+#     branches:                       Extra branch patterns beyond default+release (optional)
+#     allowed_merge_methods:          Merge method restriction (optional, default: all)
+#     required_linear_history:        Require linear history (optional, default: false)
+#     merge_queue:                    Merge queue config (optional)
+#     copilot_code_review:            Enable Copilot review (optional, default: false)
+#     require_code_owner_review:      Require CODEOWNERS review (optional, default: false)
 
 # -------------------------------------------------------------------
 # Core platform repos
@@ -22,7 +26,9 @@ repos:
   tektoncd-pruner:
     default_branch: main
     checks: []
-    required_approving_review_count: 0  # has ruleset with approval=0
+    required_approving_review_count: 0  # has ruleset with approval=0, branch protection must match
+    ruleset:
+      allowed_merge_methods: ["rebase"]
 
   tektoncd-catalog:
     default_branch: main
@@ -36,7 +42,15 @@ repos:
   operator:
     default_branch: main
     checks: []
-    required_approving_review_count: 0  # has ruleset, branch protection blocks automation
+    required_approving_review_count: 0
+    ruleset:
+      branches: ["refs/heads/next"]
+      allowed_merge_methods: ["rebase"]
+      required_linear_history: true
+      copilot_code_review: true
+      status_checks:
+        - context: "tide"
+          integration_id: 412865
 
   operator-downgrade:
     default_branch: main
@@ -50,6 +64,10 @@ repos:
   release-tests:
     default_branch: master
     checks: []
+    ruleset:
+      allowed_merge_methods: ["squash"]
+      required_linear_history: true
+      no_branch_creation: true
 
   release-tests-ginkgo:
     default_branch: main
@@ -84,6 +102,17 @@ repos:
     default_branch: main
     checks: []
     required_approving_review_count: 0  # Konflux fork — automated PRs
+    ruleset:
+      branches: ["refs/heads/next", "refs/heads/release-v1.22.x"]
+      copilot_code_review: true
+      merge_queue:
+        merge_method: "REBASE"
+        max_entries_to_build: 1
+        min_entries_to_merge: 1
+        max_entries_to_merge: 5
+        min_entries_to_merge_wait_minutes: 5
+        grouping_strategy: "ALLGREEN"
+        check_response_timeout_minutes: 60
 
   # -- Tasks --
   task-buildpacks:
@@ -114,6 +143,8 @@ repos:
   pipeline-service-exporter:
     default_branch: main
     checks: []
+    ruleset:
+      allowed_merge_methods: ["rebase", "squash"]
 
   pipeline-service-workspace-controller:
     default_branch: main
@@ -142,6 +173,8 @@ repos:
     default_branch: main
     checks: []
     required_approving_review_count: 0  # Konflux fork — automated PRs
+    ruleset:
+      required_linear_history: true
 
   p12n-multicluster-proxy-aae:
     default_branch: main
@@ -157,6 +190,8 @@ repos:
     default_branch: main
     checks: []
     required_approving_review_count: 0  # Konflux fork — automated PRs
+    ruleset:
+      allowed_merge_methods: ["rebase", "squash"]
 
   p12n-tekton-assist:
     default_branch: main
@@ -172,7 +207,9 @@ repos:
   manual-approval-gate:
     default_branch: main
     checks: []
-    required_approving_review_count: 0  # has ruleset with approval=0
+    required_approving_review_count: 0  # has ruleset with approval=0, branch protection must match
+    ruleset:
+      allowed_merge_methods: ["rebase"]
 
   multicluster-proxy-aae:
     default_branch: main
@@ -189,11 +226,25 @@ repos:
   tekton-assist:
     default_branch: next
     checks: []
+    required_approving_review_count: 0
+    ruleset:
+      branches: ["refs/heads/main"]
+      require_code_owner_review: true
+      copilot_code_review: true
 
   tekton-caches:
     default_branch: main
     checks: []
-    required_approving_review_count: 0  # has ruleset with approval=0
+    required_approving_review_count: 0  # has ruleset with approval=0, branch protection must match
+    ruleset:
+      allowed_merge_methods: ["rebase"]
+      status_checks:
+        - context: "go"
+          integration_id: 15368
+        - context: "e2e tests"
+          integration_id: 15368
+        - context: "publish latest"
+          integration_id: 15368
 
   tekton-kueue:
     default_branch: main
@@ -214,6 +265,8 @@ repos:
   must-gather:
     default_branch: main
     checks: []
+    ruleset:
+      allowed_merge_methods: ["rebase", "squash"]
 
   # -- Docs, examples, misc --
   architecture:
@@ -296,9 +349,99 @@ repos:
     default_branch: main
     checks: []
 
-  # -- Misc --
   jenkins-to-tekton:
     default_branch: main
     checks: []
 
+  # -------------------------------------------------------------------
+  # Upstream forks (Konflux-managed, automated PRs only)
+  # -------------------------------------------------------------------
+  tektoncd-pipeline:
+    default_branch: main
+    checks: []
+    required_approving_review_count: 0
+    ruleset:
+      branches: ["refs/heads/next"]
+      allowed_merge_methods: ["rebase"]
 
+  tektoncd-chains:
+    default_branch: main
+    checks: []
+    required_approving_review_count: 0
+    ruleset:
+      branches: ["refs/heads/next"]
+      allowed_merge_methods: ["rebase"]
+
+  tektoncd-cli:
+    default_branch: main
+    checks: []
+    required_approving_review_count: 0
+    ruleset:
+      branches: ["refs/heads/next"]
+      allowed_merge_methods: ["rebase"]
+
+  tektoncd-triggers:
+    default_branch: main
+    checks: []
+    required_approving_review_count: 0
+    ruleset:
+      branches: ["refs/heads/next"]
+      allowed_merge_methods: ["rebase"]
+
+  tektoncd-results:
+    default_branch: main
+    checks: []
+    required_approving_review_count: 0
+    ruleset:
+      copilot_code_review: true
+
+  tektoncd-hub:
+    default_branch: main
+    checks: []
+    required_approving_review_count: 0
+    ruleset:
+      branches: ["refs/heads/next"]
+      allowed_merge_methods: ["rebase"]
+
+  tektoncd-git-clone:
+    default_branch: main
+    checks: []
+    required_approving_review_count: 0
+
+  tektoncd-results-for-konflux:
+    default_branch: downstream-0.14.0-2
+    checks: []
+    required_approving_review_count: 0
+
+  tektoncd-plumbing:
+    default_branch: main
+    checks: []
+    required_approving_review_count: 0
+
+  pac-downstream:
+    default_branch: main
+    checks: []
+    required_approving_review_count: 0
+    ruleset:
+      branches: ["refs/heads/next"]
+      allowed_merge_methods: ["rebase"]
+
+  hub:
+    default_branch: main
+    checks: []
+
+  kueue:
+    default_branch: main
+    checks: []
+
+  operator-multicluster:
+    default_branch: main
+    checks: []
+
+  pipelines-tutorial:
+    default_branch: master
+    checks: []
+
+  lightspeed-rag-content:
+    default_branch: main
+    checks: []
