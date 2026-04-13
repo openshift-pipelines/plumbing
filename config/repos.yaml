@@ -22,6 +22,7 @@ repos:
   tektoncd-pruner:
     default_branch: main
     checks: []
+    required_approving_review_count: 0  # has ruleset with approval=0
 
   tektoncd-catalog:
     default_branch: main
@@ -171,6 +172,7 @@ repos:
   manual-approval-gate:
     default_branch: main
     checks: []
+    required_approving_review_count: 0  # has ruleset with approval=0
 
   multicluster-proxy-aae:
     default_branch: main
@@ -191,6 +193,7 @@ repos:
   tekton-caches:
     default_branch: main
     checks: []
+    required_approving_review_count: 0  # has ruleset with approval=0
 
   tekton-kueue:
     default_branch: main
