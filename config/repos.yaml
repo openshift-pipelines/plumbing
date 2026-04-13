@@ -35,6 +35,7 @@ repos:
   operator:
     default_branch: main
     checks: []
+    required_approving_review_count: 0  # has ruleset, branch protection blocks automation
 
   operator-downgrade:
     default_branch: main
@@ -43,6 +44,7 @@ repos:
   hack:
     default_branch: main
     checks: []
+    required_approving_review_count: 0  # automated PRs from Konflux/CI bots
 
   release-tests:
     default_branch: master
@@ -80,6 +82,7 @@ repos:
   p12n-console-plugin:
     default_branch: main
     checks: []
+    required_approving_review_count: 0  # Konflux fork — automated PRs
 
   # -- Tasks --
   task-buildpacks:
@@ -137,26 +140,32 @@ repos:
   p12n-manual-approval-gate:
     default_branch: main
     checks: []
+    required_approving_review_count: 0  # Konflux fork — automated PRs
 
   p12n-multicluster-proxy-aae:
     default_branch: main
     checks: []
+    required_approving_review_count: 0  # Konflux fork — automated PRs
 
   p12n-opc:
     default_branch: main
     checks: []
+    required_approving_review_count: 0  # Konflux fork — automated PRs
 
   p12n-syncer-service:
     default_branch: main
     checks: []
+    required_approving_review_count: 0  # Konflux fork — automated PRs
 
   p12n-tekton-assist:
     default_branch: main
     checks: []
+    required_approving_review_count: 0  # Konflux fork — automated PRs
 
   p12n-tekton-caches:
     default_branch: main
     checks: []
+    required_approving_review_count: 0  # Konflux fork — automated PRs
 
   # -- Other components --
   manual-approval-gate:
