@@ -198,6 +198,7 @@ repos:
   tekton-kueue:
     default_branch: main
     checks: []
+    required_approving_review_count: 0  # has ruleset with approval=0
 
   tekton-task-group:
     default_branch: main
@@ -240,6 +241,7 @@ repos:
   serve-tkn-cli:
     default_branch: main
     checks: []
+    required_approving_review_count: 0  # has ruleset with approval=0
 
   tkn-autogenerate:
     default_branch: main
